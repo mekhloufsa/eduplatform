@@ -1,4 +1,4 @@
-// student.js - Version complète avec Quiz et Devoirs
+// student.js - Version complètement fonctionnelle et corrigée
 console.log('🎓 student.js chargé');
 
 const API_BASE_URL = window.location.origin + '/eduplatform/backend/api';
@@ -9,11 +9,8 @@ let availableCourses = [];
 let selectedCourseId = null;
 let selectedCourseRequiresKey = false;
 let currentCourseDetails = null;
-let currentQuizData = null;
-let currentAssignmentData = null;
-let quizTimer = null;
-let quizStartTime = null;
-let selectedFile = null;
+let currentQuizId = null;
+let currentAssignmentId = null;
 
 // ============================================
 // FONCTIONS UTILITAIRES
@@ -63,17 +60,25 @@ function formatDateTime(dateString) {
 }
 
 function showNotification(message, type = 'success') {
+    // Supprimer les notifications existantes
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
+    
     const notification = document.createElement('div');
     notification.className = 'notification';
-    notification.style.background = type === 'success' ? '#4caf50' : '#f44336';
-    notification.style.position = 'fixed';
-    notification.style.top = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '15px 20px';
-    notification.style.borderRadius = '8px';
-    notification.style.color = 'white';
-    notification.style.zIndex = '9999';
-    notification.style.boxShadow = '0 3px 15px rgba(0,0,0,0.3)';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 9999;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideInRight 0.3s ease-out;
+        background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#ff9800'};
+    `;
     notification.textContent = message;
     document.body.appendChild(notification);
     
@@ -119,9 +124,17 @@ function showSection(sectionName) {
 }
 
 function switchTab(tabName) {
-    // Désactiver tous les boutons
+    // Mettre à jour les boutons
     document.querySelectorAll('.tab-button').forEach(function(btn) {
         btn.classList.remove('active');
+    });
+    
+    // Trouver le bouton correspondant et l'activer
+    const buttons = document.querySelectorAll('.tab-button');
+    buttons.forEach(function(btn) {
+        if (btn.getAttribute('onclick').includes(tabName)) {
+            btn.classList.add('active');
+        }
     });
     
     // Cacher tous les contenus
@@ -129,18 +142,10 @@ function switchTab(tabName) {
         content.classList.remove('active');
     });
     
-    // Activer le tab sélectionné
-    const tabButton = document.querySelector('.tab-button[onclick*="' + tabName + '"]');
-    if (tabButton) tabButton.classList.add('active');
-    
-    const tabContent = document.getElementById('tab-' + tabName);
-    if (tabContent) tabContent.classList.add('active');
-    
-    // Charger les données si nécessaire
-    if (tabName === 'quizzes' && currentCourseDetails) {
-        loadQuizzes(currentCourseDetails.id);
-    } else if (tabName === 'assignments' && currentCourseDetails) {
-        loadAssignments(currentCourseDetails.id);
+    // Afficher le contenu demandé
+    const target = document.getElementById('tab-' + tabName);
+    if (target) {
+        target.classList.add('active');
     }
 }
 
@@ -184,6 +189,7 @@ async function loadAvailableCourses() {
     try {
         const response = await fetch(API_BASE_URL + '/courses/index.php');
         const result = await response.json();
+        console.log('Cours disponibles:', result);
         
         if (result.status === 'success') {
             const enrolledIds = enrolledCourses.map(function(c) { return parseInt(c.id); });
@@ -200,90 +206,69 @@ async function loadAvailableCourses() {
     }
 }
 
-async function loadCourseDetails(courseId) {
-    console.log('Chargement détails cours:', courseId);
-    
-    try {
-        const token = localStorage.getItem('token');
-        
-        // Charger les détails du cours
-        const courseResponse = await fetch(API_BASE_URL + '/courses/index.php?id=' + courseId, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const courseResult = await courseResponse.json();
-        
-        // Charger les ressources du cours
-        const materialsResponse = await fetch(API_BASE_URL + '/courses/materials.php?course_id=' + courseId, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        const materialsResult = await materialsResponse.json();
-        
-        if (courseResult.status === 'success') {
-            currentCourseDetails = {
-                ...courseResult.data,
-                materials: materialsResult.status === 'success' ? materialsResult.data : []
-            };
-            renderCourseDetails();
-        } else {
-            showNotification('Erreur lors du chargement du cours', 'error');
-        }
-    } catch (error) {
-        console.error('Erreur chargement détails:', error);
-        showNotification('Erreur de connexion', 'error');
-    }
-}
-
 // ============================================
-// CHARGEMENT QUIZ ET DEVOIRS
+// CHARGEMENT QUIZ ET DEVOIRS - CORRIGÉ
 // ============================================
 
-async function loadQuizzes(courseId) {
+async function loadCourseQuizzes(courseId) {
     const container = document.getElementById('quizzes-list');
     if (!container) return;
     
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des quiz...</p></div>';
+    container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement des quiz...</p>';
     
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(API_BASE_URL + '/quizzes/create.php?course_id=' + courseId, {
+        // IMPORTANT: Utiliser le bon endpoint
+        const response = await fetch(API_BASE_URL + '/quizzes/index.php?course_id=' + courseId, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         
         const result = await response.json();
+        console.log('Quiz du cours:', result);
         
-        if (result.status === 'success' && result.data && result.data.length > 0) {
-            renderQuizzes(result.data);
+        if (result.status === 'success') {
+            if (result.data && result.data.length > 0) {
+                renderQuizzes(result.data);
+            } else {
+                container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;"><i class="fas fa-info-circle"></i> Aucun quiz disponible pour ce cours</p>';
+            }
         } else {
-            container.innerHTML = '<div class="no-courses"><i class="fas fa-question-circle"></i><p>Aucun quiz disponible pour le moment</p></div>';
+            container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">' + (result.message || 'Aucun quiz disponible') + '</p>';
         }
     } catch (error) {
         console.error('Erreur chargement quiz:', error);
-        container.innerHTML = '<div class="no-courses"><i class="fas fa-exclamation-circle"></i><p>Erreur de chargement des quiz</p></div>';
+        container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Erreur lors du chargement des quiz</p>';
     }
 }
 
-async function loadAssignments(courseId) {
+async function loadCourseAssignments(courseId) {
     const container = document.getElementById('assignments-list');
     if (!container) return;
     
-    container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i><p>Chargement des devoirs...</p></div>';
+    container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Chargement des devoirs...</p>';
     
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(API_BASE_URL + '/assignments/create.php?course_id=' + courseId, {
+        // Utiliser le nouvel endpoint assignments/index.php
+        const response = await fetch(API_BASE_URL + '/assignments/index.php?course_id=' + courseId, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         
         const result = await response.json();
+        console.log('Devoirs du cours:', result);
         
-        if (result.status === 'success' && result.data && result.data.length > 0) {
-            renderAssignments(result.data);
+        if (result.status === 'success') {
+            if (result.data && result.data.length > 0) {
+                renderAssignments(result.data);
+            } else {
+                container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;"><i class="fas fa-info-circle"></i> Aucun devoir disponible pour ce cours</p>';
+            }
         } else {
-            container.innerHTML = '<div class="no-courses"><i class="fas fa-tasks"></i><p>Aucun devoir disponible pour le moment</p></div>';
+            container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">' + (result.message || 'Aucun devoir disponible') + '</p>';
         }
     } catch (error) {
         console.error('Erreur chargement devoirs:', error);
-        container.innerHTML = '<div class="no-courses"><i class="fas fa-exclamation-circle"></i><p>Erreur de chargement des devoirs</p></div>';
+        container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Erreur lors du chargement des devoirs</p>';
     }
 }
 
@@ -359,6 +344,74 @@ function renderAvailableCourses() {
     }).join('') + '</div>';
 }
 
+function renderQuizzes(quizzes) {
+    const container = document.getElementById('quizzes-list');
+    if (!container) return;
+    
+    console.log('Rendu des quiz:', quizzes); // Debug
+    
+    container.innerHTML = '<div class="quiz-list">' + quizzes.map(function(quiz) {
+        const timeLimit = quiz.time_limit > 0 ? quiz.time_limit + ' min' : 'Illimité';
+        const questionsCount = quiz.questions_count || 0;
+        
+        return '<div class="quiz-item">' +
+            '<div class="quiz-info">' +
+                '<div class="quiz-title">' + escapeHtml(quiz.title) + '</div>' +
+                '<div class="quiz-meta">' +
+                    '<span><i class="fas fa-question-circle"></i> ' + questionsCount + ' question(s)</span>' +
+                    '<span><i class="fas fa-clock"></i> ' + timeLimit + '</span>' +
+                    (quiz.passing_score ? '<span><i class="fas fa-check-circle"></i> ' + quiz.passing_score + '% pour réussir</span>' : '') +
+                '</div>' +
+                (quiz.description ? '<p style="margin-top: 8px; color: #666; font-size: 0.9rem;">' + escapeHtml(truncateText(quiz.description, 100)) + '</p>' : '') +
+            '</div>' +
+            '<button class="btn-start-quiz" onclick="startQuiz(' + quiz.id + ')">' +
+                '<i class="fas fa-play"></i> Commencer' +
+            '</button>' +
+        '</div>';
+    }).join('') + '</div>';
+}
+
+function renderAssignments(assignments) {
+    const container = document.getElementById('assignments-list');
+    if (!container) return;
+    
+    container.innerHTML = '<div class="assignment-list">' + assignments.map(function(assignment) {
+        const dueDate = new Date(assignment.due_date);
+        const now = new Date();
+        const isLate = now > dueDate;
+        let statusClass = 'status-pending';
+        let statusText = 'À faire';
+        
+        if (assignment.submission_status === 'submitted' || assignment.submission_status === 'graded') {
+            statusClass = 'status-completed';
+            statusText = assignment.grade ? 'Noté: ' + assignment.grade + '/' + assignment.max_points : 'Soumis';
+        } else if (isLate) {
+            statusClass = 'status-overdue';
+            statusText = 'En retard';
+        }
+        
+        return '<div class="assignment-item">' +
+            '<div class="assignment-info">' +
+                '<div class="assignment-title">' + escapeHtml(assignment.title) + '</div>' +
+                '<div class="assignment-meta">' +
+                    '<span><i class="fas fa-calendar-alt"></i> À rendre: ' + formatDateTime(assignment.due_date) + '</span>' +
+                    '<span><i class="fas fa-star"></i> ' + assignment.max_points + ' points</span>' +
+                    '<span class="status-badge ' + statusClass + '">' + statusText + '</span>' +
+                '</div>' +
+                (assignment.description ? '<p style="margin-top: 8px; color: #666; font-size: 0.9rem;">' + escapeHtml(truncateText(assignment.description, 100)) + '</p>' : '') +
+            '</div>' +
+            (assignment.submission_status !== 'submitted' && assignment.submission_status !== 'graded' ? 
+                '<button class="btn-submit-assignment" onclick="openAssignmentModal(' + assignment.id + ')">' +
+                    '<i class="fas fa-upload"></i> Rendre' +
+                '</button>' :
+                '<button class="btn-submit-assignment" style="background: #28a745;" disabled>' +
+                    '<i class="fas fa-check"></i> Soumis' +
+                '</button>'
+            ) +
+        '</div>';
+    }).join('') + '</div>';
+}
+
 function renderCourseDetails() {
     if (!currentCourseDetails) return;
     
@@ -367,15 +420,13 @@ function renderCourseDetails() {
         ? course.teacher_first_name + ' ' + course.teacher_last_name 
         : course.teacher || 'Enseignant';
     
-    // Titre et meta
     document.getElementById('course-detail-title').textContent = course.title;
     document.getElementById('course-detail-meta').innerHTML = 
         '<div style="display: flex; gap: 20px; margin: 15px 0; color: #666; flex-wrap: wrap;">' +
-            '<span><i class="fas fa-user-tie"></i> ' + escapeHtml(teacherName) + '</span>' +
             '<span><i class="fas fa-layer-group"></i> ' + (course.category || 'Général') + '</span>' +
-            '<span><i class="fas fa-calendar"></i> ' + formatDate(course.created_at) + '</span>' +
-        '</div>' +
-        (course.description ? '<p style="color: #555; line-height: 1.6; margin-top: 15px;">' + escapeHtml(course.description) + '</p>' : '');
+            '<span><i class="fas fa-user-tie"></i> ' + escapeHtml(teacherName) + '</span>' +
+            '<span><i class="fas fa-calendar"></i> Créé le ' + formatDate(course.created_at) + '</span>' +
+        '</div>';
     
     // Ressources
     renderCourseResources(course.materials || []);
@@ -386,7 +437,7 @@ function renderCourseResources(materials) {
     if (!container) return;
     
     if (!materials || materials.length === 0) {
-        container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;">Aucune ressource disponible pour le moment</p>';
+        container.innerHTML = '<p style="color: #888; text-align: center; padding: 20px;"><i class="fas fa-info-circle"></i> Aucune ressource disponible pour le moment</p>';
         return;
     }
     
@@ -394,106 +445,72 @@ function renderCourseResources(materials) {
         let icon = 'fa-file';
         let typeLabel = 'Document';
         
-        if (material.type === 'video' || material.file_type === 'video') {
+        if (material.file_type === 'video' || material.type === 'video') {
             icon = 'fa-video';
             typeLabel = 'Vidéo';
-        } else if (material.type === 'pdf' || material.file_type === 'pdf') {
+        } else if (material.file_type === 'pdf' || material.type === 'pdf') {
             icon = 'fa-file-pdf';
             typeLabel = 'PDF';
-        } else if (material.type === 'document' || material.file_type === 'document') {
+        } else if (material.file_type === 'document' || material.type === 'document') {
             icon = 'fa-file-alt';
             typeLabel = 'Document';
-        } else if (material.type === 'link') {
+        } else if (material.file_type === 'link' || material.type === 'link') {
             icon = 'fa-link';
             typeLabel = 'Lien';
         }
         
-        return '<div class="resource-item" onclick="viewResource(' + material.id + ')">' +
+        return '<div class="resource-item" onclick="viewResource(' + material.id + ', \'' + (material.file_path || '') + '\')">' +
             '<div class="resource-icon"><i class="fas ' + icon + '"></i></div>' +
             '<h4>' + escapeHtml(material.title) + '</h4>' +
             '<small>' + formatDate(material.upload_date || material.created_at) + '</small>' +
-            '<span class="resource-type-badge" style="display: inline-block; background: #e8f0fe; color: #1967d2; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; margin-top: 5px;">' + typeLabel + '</span>' +
-            '</div>';
+            '<span class="resource-type-badge">' + typeLabel + '</span>' +
+        '</div>';
     }).join('') + '</div>';
 }
 
-function renderQuizzes(quizzes) {
-    const container = document.getElementById('quizzes-list');
-    if (!container) return;
-    
-    container.innerHTML = '<div class="quiz-list">' + quizzes.map(function(quiz) {
-        const isPassed = quiz.is_published === 1 || quiz.is_published === true;
-        const hasSubmission = quiz.submission_status === 'submitted' || quiz.submission_status === 'graded';
-        
-        let statusBadge = '';
-        let actionButton = '';
-        
-        if (hasSubmission) {
-            statusBadge = '<span class="status-badge status-completed"><i class="fas fa-check"></i> Complété</span>';
-            if (quiz.score) {
-                statusBadge += ' <span style="margin-left: 10px; font-weight: bold; color: #5f6cff;">Score: ' + quiz.score + '%</span>';
-            }
-        } else if (isPassed) {
-            statusBadge = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> En attente</span>';
-            actionButton = '<button class="btn-start-quiz" onclick="startQuiz(' + quiz.id + ')"><i class="fas fa-play"></i> Démarrer</button>';
-        }
-        
-        return '<div class="quiz-item">' +
-            '<div class="quiz-info">' +
-                '<div class="quiz-title">' + escapeHtml(quiz.title) + '</div>' +
-                '<div class="quiz-meta">' +
-                    (quiz.quiz_type ? '<span><i class="fas fa-tag"></i> ' + quiz.quiz_type + '</span>' : '') +
-                    (quiz.time_limit ? '<span><i class="fas fa-clock"></i> ' + quiz.time_limit + ' min</span>' : '') +
-                    (quiz.passing_score ? '<span><i class="fas fa-trophy"></i> Score requis: ' + quiz.passing_score + '%</span>' : '') +
-                '</div>' +
-                statusBadge +
-            '</div>' +
-            (actionButton ? '<div>' + actionButton + '</div>' : '') +
-            '</div>';
-    }).join('') + '</div>';
-}
+// ============================================
+// DÉTAILS DU COURS - CORRIGÉ
+// ============================================
 
-function renderAssignments(assignments) {
-    const container = document.getElementById('assignments-list');
-    if (!container) return;
+async function loadCourseDetails(courseId) {
+    console.log('Chargement détails cours:', courseId);
+    selectedCourseId = courseId;
     
-    const now = new Date();
-    
-    container.innerHTML = '<div class="assignment-list">' + assignments.map(function(assignment) {
-        const dueDate = new Date(assignment.due_date);
-        const isOverdue = dueDate < now;
-        const hasSubmission = assignment.submission_status === 'submitted' || assignment.submission_status === 'graded';
+    try {
+        const token = localStorage.getItem('token');
         
-        let statusBadge = '';
-        let actionButton = '';
+        // Charger les détails du cours
+        const courseResponse = await fetch(API_BASE_URL + '/courses/index.php?id=' + courseId, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const courseResult = await courseResponse.json();
         
-        if (hasSubmission) {
-            statusBadge = '<span class="status-badge status-completed"><i class="fas fa-check"></i> Soumis</span>';
-            if (assignment.grade) {
-                statusBadge += ' <span style="margin-left: 10px; font-weight: bold; color: #5f6cff;">Note: ' + assignment.grade + '/' + assignment.max_points + '</span>';
-            }
-        } else if (isOverdue) {
-            statusBadge = '<span class="status-badge status-overdue"><i class="fas fa-exclamation-triangle"></i> En retard</span>';
-            if (assignment.allow_late_submission) {
-                actionButton = '<button class="btn-submit-assignment" onclick="openAssignmentModal(' + assignment.id + ')"><i class="fas fa-upload"></i> Soumettre</button>';
-            }
+        // Charger les ressources du cours
+        const materialsResponse = await fetch(API_BASE_URL + '/courses/materials.php?course_id=' + courseId, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const materialsResult = await materialsResponse.json();
+        
+        if (courseResult.status === 'success') {
+            currentCourseDetails = {
+                ...courseResult.data,
+                materials: materialsResult.status === 'success' ? materialsResult.data : []
+            };
+            renderCourseDetails();
+            
+            // Charger les quiz et devoirs - C'EST ICI LE CORRECTION PRINCIPALE
+            await loadCourseQuizzes(courseId);
+            await loadCourseAssignments(courseId);
+            
+            // Afficher la section détails
+            showSection('course-details');
         } else {
-            statusBadge = '<span class="status-badge status-pending"><i class="fas fa-clock"></i> À faire</span>';
-            actionButton = '<button class="btn-submit-assignment" onclick="openAssignmentModal(' + assignment.id + ')"><i class="fas fa-upload"></i> Soumettre</button>';
+            showNotification('Erreur lors du chargement du cours', 'error');
         }
-        
-        return '<div class="assignment-item">' +
-            '<div class="assignment-info">' +
-                '<div class="assignment-title">' + escapeHtml(assignment.title) + '</div>' +
-                '<div class="assignment-meta">' +
-                    '<span><i class="fas fa-calendar-alt"></i> Échéance: ' + formatDateTime(assignment.due_date) + '</span>' +
-                    '<span><i class="fas fa-star"></i> Points: ' + assignment.max_points + '</span>' +
-                '</div>' +
-                statusBadge +
-            '</div>' +
-            (actionButton ? '<div>' + actionButton + '</div>' : '') +
-            '</div>';
-    }).join('') + '</div>';
+    } catch (error) {
+        console.error('Erreur chargement détails:', error);
+        showNotification('Erreur de connexion', 'error');
+    }
 }
 
 // ============================================
@@ -567,9 +584,10 @@ async function confirmEnrollment() {
         });
         
         const result = await response.json();
+        console.log('Résultat inscription:', result);
         
         if (result.status === 'success') {
-            showNotification('Inscription réussie !', 'success');
+            showNotification('Inscription réussie ! Bienvenue dans votre nouveau cours.', 'success');
             closeEnrollmentModal();
             await loadEnrolledCourses();
             showSection('my-courses');
@@ -594,11 +612,12 @@ async function confirmEnrollment() {
 }
 
 // ============================================
-// QUIZ FONCTIONS
+// QUIZ ET DEVOIRS - FONCTIONNALITÉS
 // ============================================
 
 async function startQuiz(quizId) {
-    console.log('Démarrer quiz:', quizId);
+    console.log('Démarrage du quiz:', quizId);
+    currentQuizId = quizId;
     
     try {
         const token = localStorage.getItem('token');
@@ -608,142 +627,81 @@ async function startQuiz(quizId) {
         
         const result = await response.json();
         
-        if (result.status === 'success') {
-            currentQuizData = {
-                quizId: quizId,
-                quiz: result.quiz,
-                questions: result.data
-            };
-            displayQuiz();
+        if (result.status === 'success' && result.data && result.data.length > 0) {
+            renderQuizModal(result.data);
         } else {
-            showNotification('Erreur lors du chargement du quiz', 'error');
+            showNotification('Ce quiz ne contient pas encore de questions', 'warning');
         }
     } catch (error) {
         console.error('Erreur chargement quiz:', error);
-        showNotification('Erreur de connexion', 'error');
+        showNotification('Erreur lors du chargement du quiz', 'error');
     }
 }
 
-function displayQuiz() {
-    if (!currentQuizData) return;
-    
+function renderQuizModal(questions) {
     const modal = document.getElementById('quiz-modal');
-    const modalTitle = document.getElementById('quiz-modal-title');
-    const quizContent = document.getElementById('quiz-content');
+    const title = document.getElementById('quiz-modal-title');
+    const content = document.getElementById('quiz-content');
     const submitBtn = document.getElementById('btn-submit-quiz');
     
-    modalTitle.textContent = currentQuizData.quiz.title;
+    if (title) title.textContent = 'Quiz - ' + questions.length + ' question(s)';
+    if (submitBtn) submitBtn.style.display = 'block';
     
-    let html = '';
-    
-    if (currentQuizData.quiz.description) {
-        html += '<div style="background: #f8f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">' +
-            '<p>' + escapeHtml(currentQuizData.quiz.description) + '</p>' +
+    if (content) {
+        content.innerHTML = questions.map(function(q, index) {
+            let optionsHtml = '';
+            
+            if (q.question_type === 'true_false') {
+                optionsHtml = '<div class="question-options">' +
+                    '<label class="option-item"><input type="radio" name="q' + q.id + '" value="1"> Vrai</label>' +
+                    '<label class="option-item"><input type="radio" name="q' + q.id + '" value="0"> Faux</label>' +
+                '</div>';
+            } else {
+                optionsHtml = '<div class="question-options">' + 
+                    (q.options ? q.options.map(function(opt) {
+                        const inputType = q.question_type === 'multiple_answer' ? 'checkbox' : 'radio';
+                        return '<label class="option-item">' +
+                            '<input type="' + inputType + '" name="q' + q.id + (inputType === 'checkbox' ? '[]' : '') + '" value="' + opt.id + '"> ' +
+                            escapeHtml(opt.option_text) +
+                        '</label>';
+                    }).join('') : '') +
+                '</div>';
+            }
+            
+            return '<div class="quiz-question" data-question-id="' + q.id + '">' +
+                '<div class="question-text"><strong>Question ' + (index + 1) + ':</strong> ' + escapeHtml(q.question) + '</div>' +
+                optionsHtml +
             '</div>';
+        }).join('');
     }
     
-    html += '<div style="margin-bottom: 20px; padding: 12px; background: #e8f0fe; border-radius: 6px;">' +
-        '<strong>Instructions:</strong><br>' +
-        'Questions: ' + currentQuizData.questions.length + '<br>' +
-        (currentQuizData.quiz.time_limit ? 'Durée: ' + currentQuizData.quiz.time_limit + ' minutes<br>' : '') +
-        'Score requis: ' + (currentQuizData.quiz.passing_score || 70) + '%' +
-        '</div>';
-    
-    currentQuizData.questions.forEach(function(question, index) {
-        html += '<div class="quiz-question">' +
-            '<div class="question-text"><strong>Question ' + (index + 1) + ':</strong> ' + escapeHtml(question.question) + '</div>' +
-            '<div class="question-options">';
-        
-        if (question.question_type === 'multiple_choice' && question.options) {
-            question.options.forEach(function(option, optIndex) {
-                html += '<label class="option-item">' +
-                    '<input type="radio" name="question_' + question.id + '" value="' + option.id + '">' +
-                    '<span>' + escapeHtml(option.option_text) + '</span>' +
-                    '</label>';
-            });
-        } else if (question.question_type === 'true_false') {
-            html += '<label class="option-item">' +
-                '<input type="radio" name="question_' + question.id + '" value="true">' +
-                '<span>Vrai</span>' +
-                '</label>' +
-                '<label class="option-item">' +
-                '<input type="radio" name="question_' + question.id + '" value="false">' +
-                '<span>Faux</span>' +
-                '</label>';
-        } else {
-            html += '<textarea class="answer-text" id="answer_' + question.id + '" rows="4" placeholder="Votre réponse..."></textarea>';
-        }
-        
-        html += '</div></div>';
-    });
-    
-    quizContent.innerHTML = html;
-    submitBtn.style.display = 'block';
-    modal.classList.add('active');
-    
-    // Démarrer le timer si nécessaire
-    if (currentQuizData.quiz.time_limit) {
-        startQuizTimer(currentQuizData.quiz.time_limit * 60);
-    }
+    if (modal) modal.classList.add('active');
 }
 
-function startQuizTimer(seconds) {
-    quizStartTime = Date.now();
-    const timerElement = document.getElementById('quiz-timer');
-    const displayElement = document.getElementById('timer-display');
-    
-    if (!timerElement || !displayElement) return;
-    
-    timerElement.style.display = 'block';
-    
-    quizTimer = setInterval(function() {
-        const elapsed = Math.floor((Date.now() - quizStartTime) / 1000);
-        const remaining = seconds - elapsed;
-        
-        if (remaining <= 0) {
-            clearInterval(quizTimer);
-            displayElement.textContent = '00:00';
-            timerElement.classList.add('warning');
-            showNotification('Temps écoulé !', 'error');
-            submitQuiz();
-        } else {
-            const minutes = Math.floor(remaining / 60);
-            const secs = remaining % 60;
-            displayElement.textContent = String(minutes).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
-            
-            if (remaining < 60) {
-                timerElement.classList.add('warning');
-            }
-        }
-    }, 1000);
+function closeQuizModal() {
+    const modal = document.getElementById('quiz-modal');
+    if (modal) modal.classList.remove('active');
+    currentQuizId = null;
 }
 
 async function submitQuiz() {
-    if (!currentQuizData) return;
+    if (!currentQuizId) return;
     
     // Collecter les réponses
     const answers = {};
-    currentQuizData.questions.forEach(function(question) {
-        if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
-            const selected = document.querySelector('input[name="question_' + question.id + '"]:checked');
-            if (selected) {
-                answers[question.id] = selected.value;
-            }
-        } else {
-            const textarea = document.getElementById('answer_' + question.id);
-            if (textarea) {
-                answers[question.id] = textarea.value;
+    document.querySelectorAll('.quiz-question').forEach(function(qEl) {
+        const qId = qEl.getAttribute('data-question-id');
+        const inputs = qEl.querySelectorAll('input:checked');
+        
+        if (inputs.length > 0) {
+            if (inputs.length === 1) {
+                answers[qId] = inputs[0].value;
+            } else {
+                answers[qId] = Array.from(inputs).map(function(i) { return i.value; });
             }
         }
     });
     
-    // Arrêter le timer
-    if (quizTimer) {
-        clearInterval(quizTimer);
-        document.getElementById('quiz-timer').style.display = 'none';
-    }
-    
-    // Envoyer au serveur
     try {
         const token = localStorage.getItem('token');
         const response = await fetch(API_BASE_URL + '/quizzes/submit.php', {
@@ -753,139 +711,85 @@ async function submitQuiz() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                quiz_id: currentQuizData.quizId,
-                answers: answers,
-                time_taken: quizStartTime ? Math.floor((Date.now() - quizStartTime) / 1000) : 0
+                quiz_id: currentQuizId,
+                answers: answers
             })
         });
         
         const result = await response.json();
         
         if (result.status === 'success') {
-            showNotification('Quiz soumis avec succès !', 'success');
+            showNotification('Quiz soumis ! Score: ' + result.data.score.toFixed(1) + '%', 'success');
             closeQuizModal();
-            loadQuizzes(currentCourseDetails.id);
+            // Recharger les quiz pour mettre à jour le statut
+            if (selectedCourseId) loadCourseQuizzes(selectedCourseId);
         } else {
-            showNotification('Erreur: ' + (result.message || 'Échec de soumission'), 'error');
+            showNotification(result.message || 'Erreur lors de la soumission', 'error');
         }
     } catch (error) {
         console.error('Erreur soumission quiz:', error);
-        showNotification('Erreur de connexion', 'error');
+        showNotification('Erreur lors de la soumission du quiz', 'error');
     }
 }
 
-function closeQuizModal() {
-    const modal = document.getElementById('quiz-modal');
-    if (modal) modal.classList.remove('active');
-    
-    if (quizTimer) {
-        clearInterval(quizTimer);
-        document.getElementById('quiz-timer').style.display = 'none';
-    }
-    
-    currentQuizData = null;
-    quizStartTime = null;
-}
-
-// ============================================
-// DEVOIRS FONCTIONS
-// ============================================
-
-async function openAssignmentModal(assignmentId) {
-    console.log('Ouvrir modal devoir:', assignmentId);
-    
-    try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(API_BASE_URL + '/assignments/create.php?id=' + assignmentId, {
-            headers: { 'Authorization': 'Bearer ' + token }
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            currentAssignmentData = result.data;
-            displayAssignmentModal();
-        } else {
-            showNotification('Erreur lors du chargement du devoir', 'error');
-        }
-    } catch (error) {
-        console.error('Erreur chargement devoir:', error);
-        showNotification('Erreur de connexion', 'error');
-    }
-}
-
-function displayAssignmentModal() {
-    if (!currentAssignmentData) return;
-    
+function openAssignmentModal(assignmentId) {
+    currentAssignmentId = assignmentId;
     const modal = document.getElementById('assignment-modal');
-    const modalTitle = document.getElementById('assignment-modal-title');
-    const descriptionDiv = document.getElementById('assignment-description');
-    
-    modalTitle.textContent = currentAssignmentData.title;
-    
-    let descHtml = '<h4 style="color: #5f6cff; margin-bottom: 10px;">Description du devoir</h4>' +
-        '<p>' + escapeHtml(currentAssignmentData.description) + '</p>' +
-        '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e0e0e0; display: flex; gap: 20px; font-size: 0.9rem; color: #666;">' +
-        '<span><i class="fas fa-calendar-alt"></i> Échéance: ' + formatDateTime(currentAssignmentData.due_date) + '</span>' +
-        '<span><i class="fas fa-star"></i> Points: ' + currentAssignmentData.max_points + '</span>' +
-        '</div>';
-    
-    descriptionDiv.innerHTML = descHtml;
+    if (modal) modal.classList.add('active');
+}
+
+function closeAssignmentModal() {
+    const modal = document.getElementById('assignment-modal');
+    if (modal) modal.classList.remove('active');
+    currentAssignmentId = null;
     
     // Réinitialiser le formulaire
-    document.getElementById('assignment-text').value = '';
-    document.getElementById('assignment-file').value = '';
-    document.getElementById('selected-file').style.display = 'none';
-    selectedFile = null;
+    const textArea = document.getElementById('assignment-text');
+    const fileInput = document.getElementById('assignment-file');
+    const fileDiv = document.getElementById('selected-file');
     
-    modal.classList.add('active');
+    if (textArea) textArea.value = '';
+    if (fileInput) fileInput.value = '';
+    if (fileDiv) fileDiv.style.display = 'none';
 }
 
 function handleFileSelect(input) {
-    if (input.files && input.files[0]) {
-        selectedFile = input.files[0];
-        const fileNameSpan = document.getElementById('file-name');
-        const selectedFileDiv = document.getElementById('selected-file');
-        
-        if (fileNameSpan) {
-            fileNameSpan.textContent = selectedFile.name + ' (' + Math.round(selectedFile.size / 1024) + ' KB)';
-        }
-        if (selectedFileDiv) {
-            selectedFileDiv.style.display = 'flex';
-        }
+    const file = input.files[0];
+    if (file) {
+        const fileDiv = document.getElementById('selected-file');
+        const fileName = document.getElementById('file-name');
+        if (fileDiv) fileDiv.style.display = 'flex';
+        if (fileName) fileName.textContent = file.name;
     }
 }
 
 function removeFile() {
-    selectedFile = null;
-    document.getElementById('assignment-file').value = '';
-    document.getElementById('selected-file').style.display = 'none';
+    const fileInput = document.getElementById('assignment-file');
+    const fileDiv = document.getElementById('selected-file');
+    if (fileInput) fileInput.value = '';
+    if (fileDiv) fileDiv.style.display = 'none';
 }
 
 async function submitAssignment() {
-    if (!currentAssignmentData) return;
+    if (!currentAssignmentId) return;
     
-    const text = document.getElementById('assignment-text').value.trim();
+    const text = document.getElementById('assignment-text') ? document.getElementById('assignment-text').value : '';
+    const fileInput = document.getElementById('assignment-file');
+    const btn = document.getElementById('btn-submit-assignment-btn');
     
-    if (!text && !selectedFile) {
-        showNotification('Veuillez fournir une réponse ou un fichier', 'error');
-        return;
-    }
-    
-    const btnSubmit = document.getElementById('btn-submit-assignment-btn');
-    if (btnSubmit) {
-        btnSubmit.disabled = true;
-        btnSubmit.textContent = 'Envoi en cours...';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Envoi en cours...';
     }
     
     try {
         const token = localStorage.getItem('token');
         const formData = new FormData();
-        formData.append('assignment_id', currentAssignmentData.id);
+        formData.append('assignment_id', currentAssignmentId);
         formData.append('submission_text', text);
         
-        if (selectedFile) {
-            formData.append('file', selectedFile);
+        if (fileInput && fileInput.files[0]) {
+            formData.append('file', fileInput.files[0]);
         }
         
         const response = await fetch(API_BASE_URL + '/assignments/submit.php', {
@@ -901,52 +805,33 @@ async function submitAssignment() {
         if (result.status === 'success') {
             showNotification('Devoir soumis avec succès !', 'success');
             closeAssignmentModal();
-            loadAssignments(currentCourseDetails.id);
+            // Recharger les devoirs
+            if (selectedCourseId) loadCourseAssignments(selectedCourseId);
         } else {
-            showNotification('Erreur: ' + (result.message || 'Échec de soumission'), 'error');
+            showNotification(result.message || 'Erreur lors de la soumission', 'error');
         }
     } catch (error) {
         console.error('Erreur soumission devoir:', error);
-        showNotification('Erreur de connexion', 'error');
+        showNotification('Erreur lors de la soumission du devoir', 'error');
     } finally {
-        if (btnSubmit) {
-            btnSubmit.disabled = false;
-            btnSubmit.textContent = 'Soumettre le Devoir';
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Soumettre le Devoir';
         }
     }
 }
 
-function closeAssignmentModal() {
-    const modal = document.getElementById('assignment-modal');
-    if (modal) modal.classList.remove('active');
-    currentAssignmentData = null;
-    selectedFile = null;
+function viewResource(resourceId, filePath) {
+    if (filePath) {
+        window.open(filePath, '_blank');
+    } else {
+        showNotification('Ressource non disponible', 'error');
+    }
 }
-
-// ============================================
-// VISUALISATION COURS
-// ============================================
 
 function viewCourseDetails(courseId) {
     console.log('Affichage cours:', courseId);
     loadCourseDetails(courseId);
-    showSection('course-details');
-}
-
-function viewResource(resourceId) {
-    console.log('Affichage ressource:', resourceId);
-    if (!currentCourseDetails || !currentCourseDetails.materials) return;
-    
-    const resource = currentCourseDetails.materials.find(function(m) { return parseInt(m.id) === parseInt(resourceId); });
-    if (!resource) return;
-    
-    if (resource.file_path) {
-        window.open(resource.file_path, '_blank');
-    } else if (resource.url) {
-        window.open(resource.url, '_blank');
-    } else {
-        showNotification('Ressource non disponible', 'error');
-    }
 }
 
 // ============================================
@@ -955,6 +840,16 @@ function viewResource(resourceId) {
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initialisation student.js...');
+    
+    // Ajouter les styles CSS pour les notifications
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
     
     if (!isAuthenticated()) {
         console.log('Non authentifié, redirection...');
