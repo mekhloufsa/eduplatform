@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
@@ -12,10 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== ROLE_ADMIN) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Accès refusé']);
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Méthode non autorisée']);
+    exit();
+}
+
+$headers = getallheaders();
+$token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Token manquant']);
     exit();
 }
 
@@ -23,62 +31,34 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
     
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Liste des enseignants
-        $sql = "SELECT t.*, u.email, u.first_name, u.last_name, u.is_active
-                FROM teachers t
-                JOIN users u ON t.user_id = u.id
-                ORDER BY u.created_at DESC";
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $teachers = $stmt->fetchAll();
-        
-        echo json_encode(['status' => 'success', 'data' => $teachers]);
-    }
+    // CORRECTION : Retiré t.specialization et t.department qui n'existent pas
+    $sql = "SELECT 
+                t.id as teacher_id,
+                u.id as user_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.created_at as registered_at,
+                u.is_active,
+                (SELECT COUNT(*) FROM courses WHERE teacher_id = t.id) as courses_count,
+                (SELECT COUNT(*) FROM assignments WHERE course_id IN 
+                    (SELECT id FROM courses WHERE teacher_id = t.id)) as assignments_count,
+                (SELECT COUNT(*) FROM quizzes WHERE course_id IN 
+                    (SELECT id FROM courses WHERE teacher_id = t.id)) as quizzes_count
+            FROM teachers t
+            JOIN users u ON t.user_id = u.id
+            ORDER BY u.created_at DESC";
     
-    elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Créer un enseignant
-        $data = json_decode(file_get_contents('php://input'), true);
-        
-        $email = sanitize($data['email']);
-        $password = password_hash($data['password'], PASSWORD_DEFAULT);
-        $first_name = sanitize($data['first_name']);
-        $last_name = sanitize($data['last_name']);
-        $specialty = sanitize($data['specialty']);
-        
-        $conn->beginTransaction();
-        
-        // Créer l'utilisateur
-        $user_sql = "INSERT INTO users (email, password, role, first_name, last_name) 
-                     VALUES (:email, :password, 'teacher', :first_name, :last_name)";
-        $user_stmt = $conn->prepare($user_sql);
-        $user_stmt->bindParam(':email', $email);
-        $user_stmt->bindParam(':password', $password);
-        $user_stmt->bindParam(':first_name', $first_name);
-        $user_stmt->bindParam(':last_name', $last_name);
-        $user_stmt->execute();
-        
-        $user_id = $conn->lastInsertId();
-        
-        // Créer l'enseignant
-        $teacher_sql = "INSERT INTO teachers (user_id, specialty) VALUES (:user_id, :specialty)";
-        $teacher_stmt = $conn->prepare($teacher_sql);
-        $teacher_stmt->bindParam(':user_id', $user_id);
-        $teacher_stmt->bindParam(':specialty', $specialty);
-        $teacher_stmt->execute();
-        
-        $conn->commit();
-        
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Enseignant créé avec succès',
-            'data' => ['user_id' => $user_id]
-        ]);
-    }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $teachers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode([
+        'status' => 'success',
+        'data' => $teachers
+    ]);
     
 } catch(Exception $e) {
-    if (isset($conn)) $conn->rollBack();
     http_response_code(500);
     echo json_encode(['status' => 'error', 'message' => 'Erreur serveur: ' . $e->getMessage()]);
 }

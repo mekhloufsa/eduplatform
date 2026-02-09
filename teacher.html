@@ -651,6 +651,7 @@
         let selectedFiles = [];
         let currentOptions = [];
         let optionCounter = 0;
+        let currentAssignmentId = null;
 
         // ============ NAVIGATION ============
         function showSection(sectionName) {
@@ -694,12 +695,10 @@
 
             const finalOptions = { ...defaultOptions, ...options };
 
-            // Fusionner les headers
             if (options.headers) {
                 finalOptions.headers = { ...defaultOptions.headers, ...options.headers };
             }
 
-            // Ne pas stringify si c'est du FormData
             if (finalOptions.body && !(finalOptions.body instanceof FormData)) {
                 finalOptions.headers['Content-Type'] = 'application/json';
                 if (typeof finalOptions.body === 'object') {
@@ -732,7 +731,6 @@
                     document.getElementById('total-students').textContent = stats.total_students || 0;
                     document.getElementById('total-quizzes').textContent = stats.total_quizzes || 0;
 
-                    // Charger aussi le nombre de devoirs
                     const assignResult = await apiRequest('teachers/assignments.php');
                     if (assignResult.status === 'success') {
                         document.getElementById('total-assignments').textContent = assignResult.data.length;
@@ -743,7 +741,7 @@
             }
         }
 
-        // ============ COURS ============
+        // ============ COURS - CORRIGÉ AVEC SUPPRESSION ============
         async function loadTeacherCourses() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -756,21 +754,91 @@
                         container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Vous n\'avez pas encore créé de cours.</p>';
                     } else {
                         container.innerHTML = courses.map(c => `
-                            <div class="course-item">
-                                <h3>${escapeHtml(c.title)}</h3>
-                                <p>${escapeHtml(c.description)}</p>
-                                <div class="course-meta">
-                                    <span><i class="fas fa-users"></i> ${c.enrollment_count || 0} étudiants</span>
-                                    <span><i class="fas fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
-                                    <span><i class="fas fa-tag"></i> ${escapeHtml(c.category)}</span>
+                        <div class="course-item" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); border-left: 4px solid #5f6cff;">
+                            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                <h3 style="margin: 0; color: #333; font-size: 1.3rem;">${escapeHtml(c.title)}</h3>
+                                <div style="display: flex; gap: 10px;">
+                                    <button onclick="editCourse(${c.id})" style="background: #ffc107; color: #000; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                    <button onclick="deleteCourse(${c.id}, '${escapeHtml(c.title).replace(/'/g, "\\'")}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
                                 </div>
                             </div>
-                        `).join('');
+                            <p style="color: #666; margin: 10px 0; line-height: 1.6;">${escapeHtml(c.description)}</p>
+                            <div class="course-meta" style="display: flex; gap: 20px; color: #888; font-size: 0.9rem; margin-top: 15px; flex-wrap: wrap;">
+                                <span><i class="fas fa-users"></i> ${c.enrollment_count || 0} étudiants inscrits</span>
+                                <span><i class="fas fa-calendar"></i> Créé le ${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
+                                <span><i class="fas fa-tag"></i> ${escapeHtml(c.category)}</span>
+                                <span class="badge ${c.is_public ? 'badge-success' : 'badge-warning'}" style="padding: 4px 12px; border-radius: 20px; font-size: 0.85rem;">
+                                    ${c.is_public ? 'Public' : 'Privé'}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
                     }
                 }
             } catch (e) {
                 console.error('Erreur cours:', e);
+                const container = document.getElementById('courses-list');
+                container.innerHTML = '<p style="color: #dc3545; text-align: center; padding: 40px;">Erreur lors du chargement des cours</p>';
             }
+        }
+
+        // ============ SUPPRESSION DE COURS ============
+        async function deleteCourse(courseId, courseTitle) {
+            // Demander confirmation avec le titre du cours
+            const confirmed = confirm(
+                `⚠️ Êtes-vous sûr de vouloir supprimer le cours "${courseTitle}" ?\n\n` +
+                `Cette action supprimera définitivement :\n` +
+                `- Tous les devoirs et soumissions\n` +
+                `- Tous les quiz et questions\n` +
+                `- Tous les supports de cours\n` +
+                `- Toutes les inscriptions des étudiants\n` +
+                `- Tous les messages du forum\n\n` +
+                `Cette action est irréversible !`
+            );
+
+            if (!confirmed) return;
+
+            // Double confirmation pour les cours avec des étudiants
+            const doubleConfirm = confirm(
+                `🚨 CONFIRMATION FINALE\n\n` +
+                `Tapez "SUPPRIMER" pour confirmer la suppression définitive de "${courseTitle}"`
+            );
+
+            if (!doubleConfirm) return;
+
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+                const result = await apiRequest('teachers/delete-course.php', {
+                    method: 'DELETE',
+                    body: {
+                        course_id: courseId,
+                        email: user.email
+                    }
+                });
+
+                if (result.status === 'success') {
+                    alert('✅ ' + result.message);
+                    // Recharger la liste des cours
+                    loadTeacherCourses();
+                    // Mettre à jour le dashboard
+                    loadTeacherDashboard();
+                } else {
+                    alert('❌ Erreur: ' + result.message);
+                }
+            } catch (e) {
+                console.error('Erreur suppression:', e);
+                alert('❌ Erreur lors de la suppression du cours');
+            }
+        }
+
+        function editCourse(courseId) {
+            alert('Fonction de modification à implémenter pour le cours #' + courseId);
+            // Redirection vers une page d'édition ou ouverture d'un modal
         }
 
         async function loadCoursesForSelect() {
@@ -806,7 +874,6 @@
                 handleFiles(e.dataTransfer.files);
             });
 
-            // File upload pour devoirs
             const assignArea = document.getElementById('assignment-file-area');
             const assignInput = document.getElementById('assignment-file');
             if (assignArea && assignInput) {
@@ -826,11 +893,11 @@
                 const item = document.createElement('div');
                 item.className = 'file-item';
                 item.innerHTML = `
-                    <i class="fas fa-file"></i>
-                    <span class="file-name">${escapeHtml(file.name)}</span>
-                    <span class="file-size">${formatSize(file.size)}</span>
-                    <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
-                `;
+                <i class="fas fa-file"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+                <span class="file-size">${formatSize(file.size)}</span>
+                <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
+            `;
                 list.appendChild(item);
             });
         }
@@ -843,11 +910,11 @@
                 const item = document.createElement('div');
                 item.className = 'file-item';
                 item.innerHTML = `
-                    <i class="fas fa-file"></i>
-                    <span class="file-name">${escapeHtml(file.name)}</span>
-                    <span class="file-size">${formatSize(file.size)}</span>
-                    <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
-                `;
+                <i class="fas fa-file"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+                <span class="file-size">${formatSize(file.size)}</span>
+                <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
+            `;
                 list.appendChild(item);
             });
         }
@@ -860,15 +927,15 @@
             }
             const preview = document.getElementById('assignment-file-preview');
             preview.innerHTML = `
-                <div class="file-item">
-                    <i class="fas fa-file"></i>
-                    <span class="file-name">${escapeHtml(file.name)}</span>
-                    <span class="file-size">${formatSize(file.size)}</span>
-                    <span class="remove-file" onclick="document.getElementById('assignment-file').value=''; document.getElementById('assignment-file-preview').innerHTML=''">
-                        <i class="fas fa-times"></i>
-                    </span>
-                </div>
-            `;
+            <div class="file-item">
+                <i class="fas fa-file"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+                <span class="file-size">${formatSize(file.size)}</span>
+                <span class="remove-file" onclick="document.getElementById('assignment-file').value=''; document.getElementById('assignment-file-preview').innerHTML=''">
+                    <i class="fas fa-times"></i>
+                </span>
+            </div>
+        `;
         }
 
         function formatSize(bytes) {
@@ -978,55 +1045,128 @@
             }
         });
 
+        // ============ QUIZ - CORRIGÉ ============
         async function loadTeacherQuizzes() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+                if (!user.email) {
+                    console.error('Email utilisateur non trouvé');
+                    return;
+                }
+
+                const result = await apiRequest('teachers/quizzes.php?email=' + encodeURIComponent(user.email));
+                const container = document.getElementById('quizzes-list');
+
+                if (!container) return;
 
                 if (result.status === 'success') {
-                    // Récupérer les quiz via une requête séparée ou les extraire des données
-                    const container = document.getElementById('quizzes-list');
+                    const quizzes = result.data || [];
 
-                    // Pour l'instant, afficher un message indiquant de sélectionner un cours
-                    container.innerHTML = '<p style="color: #666; text-align: center;">Sélectionnez un quiz dans l\'onglet "Construire Questions" pour voir les détails</p>';
+                    if (quizzes.length === 0) {
+                        container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-clipboard-list" style="font-size: 48px; margin-bottom: 15px; color: #ccc;"></i>
+                            <p>Vous n'avez pas encore créé de quiz.</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px;">Allez dans l'onglet "Créer un Quiz" pour commencer.</p>
+                        </div>
+                    `;
+                    } else {
+                        container.innerHTML = quizzes.map(q => {
+                            const isPublished = q.is_published == 1;
+
+                            return `
+                            <div class="quiz-item" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); border-left: 4px solid ${isPublished ? '#28a745' : '#ffc107'};">
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                                    <h3 style="margin: 0; color: #333;">${escapeHtml(q.title)}</h3>
+                                    <span class="badge ${isPublished ? 'badge-success' : 'badge-warning'}" style="padding: 6px 12px; border-radius: 20px; font-size: 0.85rem;">
+                                        ${isPublished ? '<i class="fas fa-eye"></i> Publié' : '<i class="fas fa-eye-slash"></i> Brouillon'}
+                                    </span>
+                                </div>
+                                
+                                <p style="color: #666; margin: 10px 0;">${escapeHtml(q.description || 'Aucune description')}</p>
+                                
+                                <div class="quiz-meta" style="display: flex; gap: 20px; color: #888; font-size: 0.9rem; margin: 15px 0; flex-wrap: wrap;">
+                                    <span><i class="fas fa-book"></i> ${escapeHtml(q.course_title)}</span>
+                                    <span><i class="fas fa-tag"></i> ${escapeHtml(q.category)}</span>
+                                    <span><i class="fas fa-question-circle"></i> ${q.questions_count} question(s)</span>
+                                    ${q.time_limit > 0 ? `<span><i class="fas fa-clock"></i> ${q.time_limit} min</span>` : ''}
+                                    <span><i class="fas fa-percentage"></i> ${q.passing_score}% pour réussir</span>
+                                </div>
+                                
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: flex; gap: 10px;">
+                                    <button onclick="selectQuizForBuilder(${q.id})" class="btn-create" style="padding: 8px 16px; font-size: 0.9rem;">
+                                        <i class="fas fa-edit"></i> Modifier / Questions
+                                    </button>
+                                    ${!isPublished ? `
+                                        <button onclick="publishQuiz(${q.id})" style="padding: 8px 16px; font-size: 0.9rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer;">
+                                            <i class="fas fa-upload"></i> Publier
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                        }).join('');
+
+                        updateQuizSelect(quizzes);
+                    }
+                } else {
+                    container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #dc3545;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 48px; margin-bottom: 15px;"></i>
+                        <p>Erreur lors du chargement des quiz</p>
+                    </div>
+                `;
                 }
             } catch (e) {
                 console.error('Erreur chargement quiz:', e);
             }
         }
 
-        // ============ CONSTRUCTEUR DE QUESTIONS ============
-        async function loadQuizzesForBuilder() {
-            try {
-                const user = JSON.parse(localStorage.getItem('user') || '{}');
-                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+        function selectQuizForBuilder(quizId) {
+            const buildTab = document.querySelector('.tab[onclick*="build-quiz-tab"]');
+            if (buildTab) {
+                switchTab(buildTab, 'build-quiz-tab');
+            }
 
-                if (result.status === 'success') {
-                    // On va chercher les quiz via l'API courses ou une autre méthode
-                    // Pour l'instant, on utilise les cours et on suppose qu'on récupère les quiz
-                    const select = document.getElementById('build-quiz-select');
-                    // Garder l'option par défaut
-                    const defaultOption = select.options[0];
-                    select.innerHTML = '';
-                    select.appendChild(defaultOption);
-
-                    // Récupérer les quiz de chaque cours
-                    for (const course of result.data.courses || []) {
-                        try {
-                            const quizResult = await apiRequest(`quizzes/questions.php?quiz_id=${course.id}`);
-                            // Si on a des quiz, les ajouter
-                        } catch (e) {
-                            // Ignorer les erreurs
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Erreur:', e);
+            const select = document.getElementById('build-quiz-select');
+            if (select) {
+                select.value = quizId;
+                loadQuizQuestions();
             }
         }
 
+        async function publishQuiz(quizId) {
+            if (!confirm('Voulez-vous vraiment publier ce quiz ?')) return;
+
+            try {
+                const result = await apiRequest('quizzes/publish.php?quiz_id=' + quizId, {
+                    method: 'POST'
+                });
+
+                if (result.status === 'success') {
+                    alert('✅ Quiz publié avec succès !');
+                    loadTeacherQuizzes();
+                } else {
+                    alert('❌ Erreur: ' + result.message);
+                }
+            } catch (e) {
+                alert('❌ Erreur lors de la publication');
+            }
+        }
+
+        function updateQuizSelect(quizzes) {
+            const select = document.getElementById('build-quiz-select');
+            if (!select) return;
+
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Choisir un quiz</option>' +
+                quizzes.map(q => `<option value="${q.id}">${escapeHtml(q.title)} (${escapeHtml(q.course_title)})</option>`).join('');
+
+            if (currentValue) select.value = currentValue;
+        }
+
+        // ============ CONSTRUCTEUR DE QUESTIONS ============
         function updateOptionInputType() {
-            const type = document.getElementById('question-type').value;
             renderOptions();
         }
 
@@ -1040,14 +1180,14 @@
                     { id: 'tf1', text: 'Vrai', is_correct: true },
                     { id: 'tf2', text: 'Faux', is_correct: false }
                 ];
-                currentOptions.forEach((opt, index) => {
+                currentOptions.forEach((opt) => {
                     const row = document.createElement('div');
                     row.className = 'option-row';
                     row.innerHTML = `
-                        <input type="${type === 'multiple_answer' ? 'checkbox' : 'radio'}" name="correct-option" 
-                            ${opt.is_correct ? 'checked' : ''} onchange="setCorrectOption('${opt.id}')" style="width: auto;">
-                        <input type="text" value="${opt.text}" readonly>
-                    `;
+                    <input type="radio" name="correct-option" 
+                        ${opt.is_correct ? 'checked' : ''} onchange="setCorrectOption('${opt.id}')" style="width: auto;">
+                    <input type="text" value="${opt.text}" readonly>
+                `;
                     container.appendChild(row);
                 });
             } else {
@@ -1055,11 +1195,11 @@
                     const row = document.createElement('div');
                     row.className = 'option-row';
                     row.innerHTML = `
-                        <input type="${type === 'multiple_answer' ? 'checkbox' : 'radio'}" name="correct-option" 
-                            ${opt.is_correct ? 'checked' : ''} onchange="toggleCorrectOption('${opt.id}')" style="width: auto;">
-                        <input type="text" value="${opt.text}" onchange="updateOptionText('${opt.id}', this.value)" placeholder="Option ${index + 1}">
-                        <button type="button" class="btn-remove" onclick="removeOption('${opt.id}')"><i class="fas fa-trash"></i></button>
-                    `;
+                    <input type="${type === 'multiple_answer' ? 'checkbox' : 'radio'}" name="correct-option" 
+                        ${opt.is_correct ? 'checked' : ''} onchange="toggleCorrectOption('${opt.id}')" style="width: auto;">
+                    <input type="text" value="${opt.text}" onchange="updateOptionText('${opt.id}', this.value)" placeholder="Option ${index + 1}">
+                    <button type="button" class="btn-remove" onclick="removeOption('${opt.id}')"><i class="fas fa-trash"></i></button>
+                `;
                     container.appendChild(row);
                 });
             }
@@ -1097,11 +1237,9 @@
             const opt = currentOptions.find(o => o.id === id);
 
             if (type === 'multiple_choice') {
-                // Une seule réponse correcte
                 currentOptions.forEach(o => o.is_correct = false);
                 if (opt) opt.is_correct = true;
             } else {
-                // Plusieurs réponses possibles
                 if (opt) opt.is_correct = !opt.is_correct;
             }
             renderOptions();
@@ -1168,7 +1306,6 @@
                     alert('Erreur: ' + result.message);
                 }
             } catch (error) {
-                console.error('Erreur:', error);
                 alert('Erreur lors de l\'ajout de la question');
             }
         }
@@ -1189,27 +1326,26 @@
                 const result = await apiRequest(`quizzes/questions.php?quiz_id=${quizId}`);
                 if (result.status === 'success' && result.data.length > 0) {
                     listContainer.innerHTML = result.data.map((q, index) => `
-                        <div class="saved-question">
-                            <h4>Question ${index + 1}: ${escapeHtml(q.question)} <span class="badge badge-info">${q.points} pts</span></h4>
-                            <ul class="saved-options">
-                                ${q.options.map(opt => `
-                                    <li class="${opt.is_correct ? 'correct-answer' : 'wrong-answer'}">
-                                        ${opt.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'} 
-                                        ${escapeHtml(opt.option_text)}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                            ${q.explanation ? `<p style="margin-top: 10px; color: #666; font-style: italic;"><i class="fas fa-info-circle"></i> ${escapeHtml(q.explanation)}</p>` : ''}
-                            <button class="btn-remove" onclick="deleteQuestion(${q.id})" style="margin-top: 10px;">
-                                <i class="fas fa-trash"></i> Supprimer
-                            </button>
-                        </div>
-                    `).join('');
+                    <div class="saved-question">
+                        <h4>Question ${index + 1}: ${escapeHtml(q.question)} <span class="badge badge-info">${q.points} pts</span></h4>
+                        <ul class="saved-options">
+                            ${q.options.map(opt => `
+                                <li class="${opt.is_correct ? 'correct-answer' : 'wrong-answer'}">
+                                    ${opt.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'} 
+                                    ${escapeHtml(opt.option_text)}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        ${q.explanation ? `<p style="margin-top: 10px; color: #666; font-style: italic;"><i class="fas fa-info-circle"></i> ${escapeHtml(q.explanation)}</p>` : ''}
+                        <button class="btn-remove" onclick="deleteQuestion(${q.id})" style="margin-top: 10px;">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </div>
+                `).join('');
                 } else {
                     listContainer.innerHTML = '<p style="color: #666; text-align: center;">Aucune question ajoutée</p>';
                 }
             } catch (error) {
-                console.error('Erreur:', error);
                 listContainer.innerHTML = '<p style="color: red; text-align: center;">Erreur de chargement</p>';
             }
         }
@@ -1229,7 +1365,6 @@
                     alert('Erreur: ' + result.message);
                 }
             } catch (error) {
-                console.error('Erreur:', error);
                 alert('Erreur lors de la suppression');
             }
         }
@@ -1258,13 +1393,10 @@
                     formData.append('file', fileInput.files[0]);
                 }
 
-                // Appel direct avec fetch pour FormData
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/assignments/create.php`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    },
+                    headers: { 'Authorization': 'Bearer ' + token },
                     body: formData
                 });
 
@@ -1279,13 +1411,13 @@
                     alert('Erreur: ' + (result.message || 'Erreur inconnue'));
                 }
             } catch (error) {
-                console.error('Erreur:', error);
                 alert('Erreur serveur: ' + error.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-save"></i> Créer le devoir';
             }
         });
+
         async function loadTeacherAssignments() {
             try {
                 const result = await apiRequest('teachers/assignments.php');
@@ -1297,17 +1429,22 @@
                         container.innerHTML = '<p style="color: #666; text-align: center;">Aucun devoir créé</p>';
                     } else {
                         container.innerHTML = assignments.map(a => `
-                            <div class="assignment-item">
-                                <h3>${escapeHtml(a.title)} <span class="badge ${a.submission_count > 0 ? 'badge-warning' : 'badge-success'}">${a.submission_count} soumission(s)</span></h3>
-                                <p>${escapeHtml(a.description)}</p>
-                                <div class="assignment-meta">
-                                    <span><i class="fas fa-book"></i> ${escapeHtml(a.course_title)}</span>
-                                    <span><i class="fas fa-calendar-alt"></i> À rendre: ${new Date(a.due_date).toLocaleString('fr-FR')}</span>
-                                    <span><i class="fas fa-star"></i> ${a.max_points} points</span>
-                                    ${a.file_name ? '<span><i class="fas fa-paperclip"></i> Fichier joint</span>' : ''}
-                                </div>
+                        <div class="assignment-item" style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+                            <h3>${escapeHtml(a.title)} <span class="badge ${a.submission_count > 0 ? 'badge-warning' : 'badge-success'}">${a.submission_count} soumission(s)</span></h3>
+                            <p>${escapeHtml(a.description)}</p>
+                            <div class="assignment-meta" style="display: flex; gap: 20px; color: #888; font-size: 0.9rem; margin: 15px 0; flex-wrap: wrap;">
+                                <span><i class="fas fa-book"></i> ${escapeHtml(a.course_title)}</span>
+                                <span><i class="fas fa-calendar-alt"></i> À rendre: ${new Date(a.due_date).toLocaleString('fr-FR')}</span>
+                                <span><i class="fas fa-star"></i> ${a.max_points} points</span>
+                                ${a.file_name ? '<span><i class="fas fa-paperclip"></i> Fichier joint</span>' : ''}
                             </div>
-                        `).join('');
+                            <div style="margin-top: 15px;">
+                                <button onclick="viewSubmissions(${a.id})" class="btn-create" style="padding: 8px 16px; font-size: 0.9rem;">
+                                    <i class="fas fa-eye"></i> Voir les soumissions
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
                     }
                 }
             } catch (e) {
@@ -1315,6 +1452,314 @@
             }
         }
 
+        // ============ SOUMISSIONS - CORRIGÉ ============
+        // ============ SOUMISSIONS - CORRIGÉ ============
+        // ============ SOUMISSIONS - CORRIGÉ ============
+        async function viewSubmissions(assignmentId) {
+            console.log('Chargement des soumissions pour le devoir:', assignmentId);
+            currentAssignmentId = assignmentId;
+
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    alert('Session expirée. Veuillez vous reconnecter.');
+                    return;
+                }
+
+                const response = await fetch(API_BASE_URL + '/teachers/submissions.php?assignment_id=' + assignmentId, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                console.log('Résultat API soumissions:', result);
+
+                if (result.status === 'success') {
+                    if (result.data && result.data.assignment && result.data.submissions) {
+                        // Stocker max_points globalement pour la notation
+                        window.currentMaxPoints = parseFloat(result.data.assignment.max_points) || 0;
+                        renderSubmissionsModal(result.data);
+                    } else {
+                        alert('Erreur: Structure de données invalide');
+                    }
+                } else {
+                    alert('Erreur: ' + (result.message || 'Impossible de charger les soumissions'));
+                }
+            } catch (error) {
+                console.error('Erreur fetch soumissions:', error);
+                alert('Erreur de connexion lors du chargement des soumissions');
+            }
+        }
+
+        function renderSubmissionsModal(data) {
+            console.log('Données reçues:', data);
+
+            const assignment = data.assignment;
+            const submissions = data.submissions || [];
+
+            // CORRECTION : S'assurer que max_points est un nombre valide
+            const maxPoints = parseFloat(assignment.max_points) || 0;
+            console.log('Max points:', maxPoints);
+
+            // Supprimer l'ancien modal s'il existe
+            let oldModal = document.getElementById('submissions-modal');
+            if (oldModal) {
+                oldModal.remove();
+            }
+
+            // Créer le nouveau modal
+            const modal = document.createElement('div');
+            modal.id = 'submissions-modal';
+            modal.style.cssText = 'display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;';
+
+            modal.innerHTML = `
+        <div style="background: white; border-radius: 15px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background: linear-gradient(135deg, #5f6cff, #764ba2); color: white; position: sticky; top: 0; z-index: 10;">
+                <h3 style="margin: 0; font-size: 1.3rem;"><i class="fas fa-clipboard-list" style="margin-right: 10px;"></i>Soumissions du devoir</h3>
+                <button onclick="closeSubmissionsModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.3)';" onmouseout="this.style.background='rgba(255,255,255,0.2)';">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="submissions-content" style="padding: 25px;"></div>
+        </div>
+    `;
+
+            document.body.appendChild(modal);
+
+            const content = document.getElementById('submissions-content');
+
+            // Info du devoir
+            let html = `
+        <div style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f8f9ff, #e8f0fe); border-radius: 12px; border-left: 4px solid #5f6cff;">
+            <h4 style="margin: 0 0 10px 0; color: #333; font-size: 1.3rem;">${escapeHtml(assignment.title)}</h4>
+            <p style="color: #666; margin: 0 0 15px 0; line-height: 1.5;">${escapeHtml(assignment.description || 'Aucune description')}</p>
+            <div style="display: flex; gap: 20px; font-size: 0.9rem; color: #555; flex-wrap: wrap;">
+                <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-book" style="color: #5f6cff;"></i> ${escapeHtml(assignment.course_title)}</span>
+                <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-calendar" style="color: #5f6cff;"></i> Date limite: ${new Date(assignment.due_date).toLocaleString('fr-FR')}</span>
+                <span style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-star" style="color: #ffc107;"></i> <strong>${maxPoints}</strong> points maximum</span>
+            </div>
+        </div>
+    `;
+
+            if (submissions.length === 0) {
+                html += `
+            <div style="text-align: center; padding: 60px 20px; color: #666;">
+                <i class="fas fa-inbox" style="font-size: 64px; color: #ddd; margin-bottom: 20px;"></i>
+                <h3 style="margin: 0 0 10px 0; color: #888;">Aucune soumission pour le moment</h3>
+                <p style="margin: 0;">Les étudiants n'ont pas encore rendu ce devoir.</p>
+            </div>
+        `;
+            } else {
+                html += `<div style="margin-bottom: 15px; font-size: 1.1rem; color: #333;"><strong>📊 ${submissions.length} soumission(s)</strong></div>`;
+                html += '<div style="display: flex; flex-direction: column; gap: 20px;">';
+
+                submissions.forEach(function (sub) {
+                    const submittedDate = sub.submitted_at
+                        ? new Date(sub.submitted_at).toLocaleString('fr-FR')
+                        : '<span style="color: #dc3545;">Non soumis</span>';
+                    const isGraded = sub.status === 'graded';
+                    const isLate = sub.is_late == 1;
+
+                    // Construction du contenu
+                    let submissionContent = '';
+
+                    if (sub.submission_text && sub.submission_text.trim() !== '') {
+                        submissionContent += `
+                    <div style="margin: 20px 0; padding: 20px; background: #f8f9ff; border-radius: 10px; border-left: 4px solid #5f6cff;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: #5f6cff; font-weight: 600;">
+                            <i class="fas fa-comment-alt"></i> Réponse textuelle
+                        </div>
+                        <div style="color: #444; line-height: 1.8; white-space: pre-wrap; font-size: 0.95rem; background: white; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0;">${escapeHtml(sub.submission_text)}</div>
+                    </div>
+                `;
+                    }
+
+                    if (sub.file_path && sub.file_path.trim() !== '') {
+                        const fileName = sub.file_path.split('/').pop();
+                        submissionContent += `
+                    <div style="margin: 20px 0;">
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: #333; font-weight: 600;">
+                            <i class="fas fa-paperclip" style="color: #28a745;"></i> Fichier joint
+                        </div>
+                        <a href="${sub.file_path}" target="_blank" style="display: inline-flex; align-items: center; gap: 12px; padding: 15px 20px; background: #e8f0fe; color: #1967d2; text-decoration: none; border-radius: 10px; border: 2px solid transparent; transition: all 0.3s;" onmouseover="this.style.borderColor='#1967d2'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='transparent'; this.style.transform='none';">
+                            <i class="fas fa-file" style="font-size: 24px;"></i>
+                            <div>
+                                <div style="font-weight: 600;">${escapeHtml(fileName)}</div>
+                                <div style="font-size: 0.85rem; color: #666;">Cliquez pour ouvrir</div>
+                            </div>
+                            <i class="fas fa-external-link-alt" style="margin-left: 15px;"></i>
+                        </a>
+                    </div>
+                `;
+                    }
+
+                    if (submissionContent === '') {
+                        submissionContent = `
+                    <div style="margin: 20px 0; padding: 20px; background: #fff3cd; border-radius: 10px; color: #856404; text-align: center;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px;"></i>
+                        <div style="font-weight: 600;">Aucun contenu soumis</div>
+                    </div>
+                `;
+                    }
+
+                    // CORRECTION : Utiliser maxPoints (la variable locale) au lieu de assignment.max_points
+                    html += `
+                <div style="border: 2px solid #e0e0e0; border-radius: 12px; padding: 25px; background: white;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0;">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #5f6cff, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 1.3rem;">
+                                    ${sub.first_name ? sub.first_name.charAt(0).toUpperCase() : '?'}${sub.last_name ? sub.last_name.charAt(0).toUpperCase() : '?'}
+                                </div>
+                                <div>
+                                    <div style="font-size: 1.2rem; font-weight: 600; color: #2f3542;">${escapeHtml(sub.first_name)} ${escapeHtml(sub.last_name)}</div>
+                                    <div style="color: #666; font-size: 0.9rem; margin-top: 4px;">
+                                        <i class="fas fa-envelope" style="margin-right: 5px;"></i>${escapeHtml(sub.email)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 0.9rem; color: #888; margin-bottom: 8px;">
+                                <i class="fas fa-clock" style="margin-right: 5px;"></i>${submittedDate}
+                                ${isLate ? '<span style="color: #dc3545; font-weight: 600; margin-left: 10px;"><i class="fas fa-exclamation-circle"></i> EN RETARD</span>' : ''}
+                            </div>
+                            ${isGraded ?
+                            `<div style="background: #d4edda; color: #155724; padding: 8px 16px; border-radius: 20px; font-size: 0.95rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-check-circle"></i> Noté: ${sub.grade}/${maxPoints}
+                                </div>` :
+                            `<div style="background: #fff3cd; color: #856404; padding: 8px 16px; border-radius: 20px; font-size: 0.95rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                                    <i class="fas fa-hourglass-half"></i> En attente
+                                </div>`
+                        }
+                        </div>
+                    </div>
+                    
+                    ${submissionContent}
+                    
+                    <div style="margin-top: 25px; padding: 20px; background: #f8f9ff; border-radius: 10px; border: 2px solid #e0e2ff;">
+                        <div style="font-weight: 600; color: #333; margin-bottom: 15px;">
+                            <i class="fas fa-star" style="color: #ffc107; margin-right: 8px;"></i>Notation
+                        </div>
+                        <div style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+                            <div style="flex: 0 0 200px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #555; font-size: 0.9rem;">
+                                    Note / <strong style="color: #5f6cff; font-size: 1.1rem;">${maxPoints}</strong> points
+                                </label>
+                                <input type="number" 
+                                    id="grade-${sub.submission_id}" 
+                                    placeholder="0-${maxPoints}" 
+                                    min="0" 
+                                    max="${maxPoints}" 
+                                    step="0.5"
+                                    value="${sub.grade !== null ? sub.grade : ''}" 
+                                    style="width: 100%; padding: 12px 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem;">
+                            </div>
+                            <button onclick="gradeSubmission(${sub.submission_id}, ${maxPoints})" 
+                                style="background: #28a745; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                                <i class="fas fa-save" style="margin-right: 8px;"></i>Enregistrer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+                });
+
+                html += '</div>';
+            }
+
+            content.innerHTML = html;
+            console.log('Modal affiché avec maxPoints:', maxPoints);
+        }
+
+        // CORRECTION : Fonction de fermeture améliorée
+        function closeSubmissionsModal() {
+            console.log('Fermeture du modal');
+            const modal = document.getElementById('submissions-modal');
+            if (modal) {
+                modal.style.display = 'none';
+                modal.remove(); // Supprimer complètement le modal du DOM
+            }
+            currentAssignmentId = null;
+            window.currentMaxPoints = null;
+        }
+
+        // CORRECTION : Fonction de notation avec vérification
+        async function gradeSubmission(submissionId, maxPoints) {
+            console.log('Notation:', { submissionId, maxPoints, currentMaxPoints: window.currentMaxPoints });
+
+            // Utiliser la valeur passée en paramètre ou la valeur globale
+            const validMaxPoints = maxPoints || window.currentMaxPoints || 0;
+
+            if (validMaxPoints <= 0) {
+                alert('❌ Erreur: Points maximum non définis. Veuillez recharger la page.');
+                return;
+            }
+
+            const gradeInput = document.getElementById('grade-' + submissionId);
+            const grade = gradeInput ? parseFloat(gradeInput.value) : null;
+
+            console.log('Valeurs:', { grade, validMaxPoints });
+
+            if (grade === null || isNaN(grade)) {
+                alert('⚠️ Veuillez entrer une note valide');
+                return;
+            }
+
+            if (grade < 0 || grade > validMaxPoints) {
+                alert(`⚠️ La note doit être comprise entre 0 et ${validMaxPoints}`);
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(API_BASE_URL + '/teachers/grade.php', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        submission_id: submissionId,
+                        grade: grade
+                    })
+                });
+
+                const result = await response.json();
+                console.log('Résultat notation:', result);
+
+                if (result.status === 'success') {
+                    alert('✅ Note enregistrée avec succès !');
+                    // Recharger les soumissions
+                    if (currentAssignmentId) {
+                        viewSubmissions(currentAssignmentId);
+                    }
+                } else {
+                    alert('❌ Erreur: ' + (result.message || 'Impossible d\'enregistrer'));
+                }
+            } catch (error) {
+                console.error('Erreur notation:', error);
+                alert('❌ Erreur de connexion');
+            }
+        }
+
+        // Fermer le modal en cliquant à l'extérieur
+        document.addEventListener('click', function (e) {
+            const modal = document.getElementById('submissions-modal');
+            if (modal && e.target === modal) {
+                closeSubmissionsModal();
+            }
+        });
+
+        // Fermer avec la touche Echap
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeSubmissionsModal();
+            }
+        });
         // ============ UTILITAIRES ============
         function escapeHtml(text) {
             if (!text) return '';
@@ -1342,7 +1787,6 @@
             resetQuestionBuilder();
             loadTeacherDashboard();
 
-            // Définir la date minimale pour le devoir (aujourd'hui)
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             document.getElementById('assignment-due-date').min = now.toISOString().slice(0, 16);

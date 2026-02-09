@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 require_once '../../config/database.php';
@@ -12,10 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] !== ROLE_ADMIN) {
-    http_response_code(403);
-    echo json_encode(['status' => 'error', 'message' => 'Accès refusé']);
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['status' => 'error', 'message' => 'Méthode non autorisée']);
+    exit();
+}
+
+$headers = getallheaders();
+$token = isset($headers['Authorization']) ? str_replace('Bearer ', '', $headers['Authorization']) : null;
+
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(['status' => 'error', 'message' => 'Token manquant']);
     exit();
 }
 
@@ -23,32 +31,32 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
     
-    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Liste des étudiants
-        $sql = "SELECT s.*, u.email, u.first_name, u.last_name, u.is_active
-                FROM students s
-                JOIN users u ON s.user_id = u.id
-                ORDER BY u.created_at DESC";
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        $students = $stmt->fetchAll();
-        
-        echo json_encode(['status' => 'success', 'data' => $students]);
-    }
+    // CORRECTION : Retiré s.major qui n'existe pas
+    $sql = "SELECT 
+                s.id as student_id,
+                u.id as user_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                u.created_at as registered_at,
+                u.is_active,
+                s.student_card,
+                s.year,
+                (SELECT COUNT(*) FROM enrollments WHERE student_id = s.id) as enrolled_courses,
+                (SELECT COUNT(*) FROM assignment_submissions WHERE student_id = s.id) as submissions_count,
+                (SELECT AVG(grade) FROM assignment_submissions WHERE student_id = s.id AND grade IS NOT NULL) as average_grade
+            FROM students s
+            JOIN users u ON s.user_id = u.id
+            ORDER BY u.created_at DESC";
     
-    elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-        // Supprimer un étudiant
-        $data = json_decode(file_get_contents('php://input'), true);
-        $student_id = intval($data['student_id']);
-        
-        $sql = "DELETE FROM users WHERE id = (SELECT user_id FROM students WHERE id = :student_id)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':student_id', $student_id);
-        $stmt->execute();
-        
-        echo json_encode(['status' => 'success', 'message' => 'Étudiant supprimé']);
-    }
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    echo json_encode([
+        'status' => 'success',
+        'data' => $students
+    ]);
     
 } catch(Exception $e) {
     http_response_code(500);
