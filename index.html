@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduPlatform - Plateforme E-Learning</title>
+    <link rel="stylesheet" href="frontend/css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📚 EduPlatform</h1>
+                </div>
+
+                <!-- Barre de recherche -->
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Rechercher un cours, enseignant...">
+                    <button type="button" id="searchBtn">🔍</button>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="index.html" class="active">Accueil</a>
+                    <a href="#courses">Cours</a>
+                    <a href="login.html" class="btn-login">Connexion</a>
+                    <a href="register.html" class="btn-register">Inscription</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Bienvenue sur EduPlatform</h2>
+                <p>Votre plateforme d'apprentissage en ligne pour les étudiants en informatique</p>
+                <div class="hero-buttons">
+                    <a href="register.html" class="btn btn-primary">Commencer maintenant</a>
+                    <a href="#courses" class="btn btn-secondary">Découvrir les cours</a>
+                    <a href="register.html" class="btn btn-secondary">Devenir Enseignant</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filtres de spécialité -->
+    <section class="filters">
+        <div class="container">
+            <h3>Filtrer par spécialité</h3>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-specialty="all">Tous</button>
+                <button class="filter-btn" data-specialty="web">Développement Web</button>
+                <button class="filter-btn" data-specialty="mobile">Développement Mobile</button>
+                <button class="filter-btn" data-specialty="data">Data Science</button>
+                <button class="filter-btn" data-specialty="ai">Intelligence Artificielle</button>
+                <button class="filter-btn" data-specialty="cyber">Cybersécurité</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cours disponibles -->
+    <section class="courses" id="courses">
+        <div class="container">
+            <h3>Cours Disponibles</h3>
+
+            <!-- Message quand aucun cours -->
+            <div id="no-courses-message" style="display: none; text-align: center; padding: 50px 20px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">📚</div>
+                <h3 style="color: #666; margin-bottom: 10px;">Aucun cours disponible pour le moment</h3>
+                <p style="color: #888;">Les enseignants préparent actuellement les cours. Revenez bientôt !</p>
+            </div>
+
+            <!-- Grid des cours (chargé dynamiquement) -->
+            <div class="courses-grid" id="courses-grid">
+                <!-- Les cours seront chargés ici par JavaScript -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="courses-pagination" style="margin-top: 30px; text-align: center; display: none;">
+                <button id="prev-page" style="padding: 10px 20px; margin: 0 5px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">← Précédent</button>
+                <span id="page-info" style="margin: 0 10px;"></span>
+                <button id="next-page" style="padding: 10px 20px; margin: 0 5px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">Suivant →</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EduPlatform</h4>
+                    <p>Plateforme d'apprentissage en ligne pour étudiants en informatique</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Liens rapides</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="#courses">Cours</a></li>
+                        <li><a href="login.html">Connexion</a></li>
+                        <li><a href="register.html">Inscription</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📧 contact@eduplatform.com</p>
+                    <p>📞 +212 6XX XXX XXX</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 EduPlatform. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal pour l'inscription avec clé -->
+    <div class="modal" id="enrollment-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="modal-content" style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="color: #5f6cff; margin: 0;">Inscription au Cours</h3>
+                <button class="close-modal" onclick="closeEnrollmentModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">×</button>
+            </div>
+
+            <div class="modal-body">
+                <div id="enrollment-info">
+                    <h4 id="modal-course-title" style="margin-bottom: 5px;"></h4>
+                    <p id="modal-course-teacher" style="color: #666; margin-bottom: 20px;"></p>
+
+                    <div id="key-required-section" style="display: none;">
+                        <div class="form-group">
+                            <label for="input-enrollment-key" style="display: block; margin-bottom: 8px; font-weight: 500;">Clé d'inscription requise</label>
+                            <input type="text" id="input-enrollment-key" placeholder="Entrez la clé fournie par l'enseignant" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                            <small style="display: block; color: #888; margin-top: 5px;">La clé est nécessaire pour s'inscrire à ce cours</small>
+                        </div>
+                        <div id="key-error" class="error-message" style="display: none; background: #fee; color: #c33; padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #c33;"></div>
+                    </div>
+
+                    <div id="free-enrollment-section" style="display: none;">
+                        <p class="success-message" style="background: #d4edda; color: #155724; padding: 12px; border-radius: 6px; border: 1px solid #c3e6cb;">🎓 Ce cours est en accès libre, aucune clé requise.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #eee;">
+                <button class="btn-secondary" onclick="closeEnrollmentModal()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Annuler</button>
+                <button class="btn-primary" id="btn-confirm-enrollment" onclick="confirmEnrollment()" style="background: #667eea; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: 500;">S'inscrire</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="frontend/js/script.js"></script>
+</body>
+</html>

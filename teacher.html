@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Espace Enseignant - EduPlatform</title>
+    <link rel="stylesheet" href="frontend/css/teacher.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e2ff;
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            background: #f8f9ff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #5f6cff;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .quiz-question {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #5f6cff;
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .question-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .question-actions button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .question-actions button:hover {
+            background: #5a6268;
+        }
+        
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .correct-option {
+            border: 2px solid #28a745;
+            background: #d4edda;
+        }
+        
+        .assignment-item, .forum-topic-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #5f6cff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <h2>EduPlatform | Enseignant</h2>
+        <nav class="nav-links">
+            <a href="#" class="active" id="nav-dashboard">Tableau de bord</a>
+            <a href="#" id="nav-courses">Mes Cours</a>
+            <a href="#" id="nav-create">Créer un Cours</a>
+            <a href="#" id="nav-quizzes">Quiz & Évaluations</a>
+            <a href="#" id="nav-forum">Forum</a>
+        </nav>
+        <button class="logout" onclick="logout()">Déconnexion</button>
+    </header>
+
+    <!-- Content -->
+    <div class="container">
+        <!-- Tableau de bord -->
+        <div id="dashboard-section" class="active-section">
+            <h1>Tableau de bord Enseignant</h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-courses">0</div>
+                    <div class="stat-label">Cours créés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-students">0</div>
+                    <div class="stat-label">Étudiants inscrits</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-quizzes">0</div>
+                    <div class="stat-label">Quiz créés</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pending-assignments">0</div>
+                    <div class="stat-label">Devoirs en attente</div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-top: 30px;">
+                <h3>Activités récentes</h3>
+                <div id="recent-activities">
+                    <!-- Activités chargées dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Mes Cours -->
+        <div id="courses-section" style="display: none;">
+            <h1>Mes Cours Créés</h1>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="active-courses">Cours Actifs</button>
+                <button class="tab" data-tab="draft-courses">Brouillons</button>
+                <button class="tab" data-tab="archived-courses">Archivés</button>
+            </div>
+            
+            <div class="tab-content active" id="active-courses-tab">
+                <div class="courses-list" id="active-courses-list">
+                    <!-- Cours actifs chargés dynamiquement -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="draft-courses-tab">
+                <div class="courses-list" id="draft-courses-list">
+                    <!-- Cours brouillons -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="archived-courses-tab">
+                <div class="courses-list" id="archived-courses-list">
+                    <!-- Cours archivés -->
+                </div>
+            </div>
+            
+            <button class="btn-create" onclick="showCreateSection()" style="margin-top: 20px;">
+                <i class="fas fa-plus"></i> Créer un nouveau cours
+            </button>
+        </div>
+
+        <!-- Section Création de Cours -->
+        <div id="create-section" style="display: none;">
+            <h1>Créer un Nouveau Cours</h1>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="course-info">Informations du cours</button>
+                <button class="tab" data-tab="course-content">Contenu du cours</button>
+                <button class="tab" data-tab="course-evaluations">Évaluations</button>
+                <button class="tab" data-tab="course-settings">Paramètres</button>
+            </div>
+            
+            <form id="create-course-form">
+                <!-- Onglet Informations -->
+                <div class="tab-content active" id="course-info-tab">
+                    <div class="form-group">
+                        <label for="course-title">Titre du cours *</label>
+                        <input type="text" id="course-title" placeholder="Ex: Introduction à JavaScript" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="course-category">Catégorie *</label>
+                        <select id="course-category" required>
+                            <option value="">Sélectionnez une catégorie</option>
+                            <option>Développement Web</option>
+                            <option>Data Science</option>
+                            <option>Intelligence Artificielle</option>
+                            <option>Cybersécurité</option>
+                            <option>Développement Mobile</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="course-description">Description *</label>
+                        <textarea id="course-description" rows="4" placeholder="Décrivez votre cours..." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="course-objectives">Objectifs d'apprentissage</label>
+                        <textarea id="course-objectives" rows="3" placeholder="Listez les objectifs que les étudiants atteindront..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="course-prerequisites">Prérequis</label>
+                        <textarea id="course-prerequisites" rows="2" placeholder="Connaissances requises pour suivre ce cours..."></textarea>
+                    </div>
+                </div>
+                
+                <!-- Onglet Contenu -->
+                <div class="tab-content" id="course-content-tab">
+                    <h3>Supports de cours</h3>
+                    
+                    <div class="materials-section">
+                        <div class="file-upload" id="materials-upload">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <p>Glissez-déposez des fichiers ou cliquez pour sélectionner</p>
+                            <input type="file" id="course-materials" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.mp4,.avi,.mov,.mp3,.zip,.rar">
+                            <small>Formats acceptés: PDF, DOC, PPT, Images, Vidéos, Audio, Archives (Max: 10MB)</small>
+                        </div>
+                        
+                        <div id="materials-list" class="materials-list">
+                            <!-- Liste des supports ajoutés -->
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="main-content">Contenu principal (HTML/Text)</label>
+                            <textarea id="main-content" rows="8" placeholder="Vous pouvez écrire le contenu principal du cours ici en HTML ou texte simple..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Évaluations -->
+                <div class="tab-content" id="course-evaluations-tab">
+                    <h3>Configuration des évaluations</h3>
+                    
+                    <div class="evaluation-options">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable-quizzes">
+                                <span>Activer les quiz pour ce cours</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable-assignments">
+                                <span>Activer les devoirs</span>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable-exam">
+                                <span>Activer l'examen final</span>
+                            </label>
+                        </div>
+                        
+                        <div id="quiz-settings" style="margin-top: 20px; display: none;">
+                            <h4>Paramètres des quiz</h4>
+                            <div class="form-group">
+                                <label for="default-passing-score">Score de réussite par défaut (%)</label>
+                                <input type="number" id="default-passing-score" min="0" max="100" value="60">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="max-quiz-attempts">Tentatives maximum par quiz</label>
+                                <input type="number" id="max-quiz-attempts" min="1" max="10" value="3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Onglet Paramètres -->
+                <div class="tab-content" id="course-settings-tab">
+                    <h3>Paramètres d'accès</h3>
+                    
+                    <div class="enrollment-options">
+                        <div class="form-group">
+                            <label for="course-visibility">Visibilité du cours</label>
+                            <select id="course-visibility">
+                                <option value="public">Public (visible à tous)</option>
+                                <option value="private">Privé (seulement avec clé)</option>
+                                <option value="draft">Brouillon (invisible)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="private-settings" style="display: none;">
+                            <div class="form-group">
+                                <label for="enrollment-key">Clé d'inscription *</label>
+                                <input type="text" id="enrollment-key" placeholder="Ex: WINTER2024" maxlength="20">
+                                <button type="button" id="generate-key" class="btn-generate">
+                                    <i class="fas fa-random"></i> Générer une clé
+                                </button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="max-enrollments">Limite d'inscriptions</label>
+                                <input type="number" id="max-enrollments" placeholder="0 = illimité" min="0">
+                                <small>Nombre maximum d'étudiants (0 = illimité)</small>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="course-start-date">Date de début</label>
+                            <input type="date" id="course-start-date">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="course-end-date">Date de fin</label>
+                            <input type="date" id="course-end-date">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-buttons" style="margin-top: 30px;">
+                    <button type="button" class="btn-prev" onclick="prevTab()">
+                        <i class="fas fa-arrow-left"></i> Précédent
+                    </button>
+                    <button type="button" class="btn-next" onclick="nextTab()">
+                        Suivant <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn-submit" id="submit-course">
+                        <i class="fas fa-save"></i> Créer le cours
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Section Quiz & Évaluations -->
+        <div id="quizzes-section" style="display: none;">
+            <h1>Gestion des Quiz & Évaluations</h1>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="create-quiz">Créer un Quiz</button>
+                <button class="tab" data-tab="manage-quizzes">Gérer les Quiz</button>
+                <button class="tab" data-tab="create-assignment">Créer un Devoir</button>
+                <button class="tab" data-tab="grade-assignments">Noter les Devoirs</button>
+            </div>
+            
+            <!-- Création de quiz -->
+            <div class="tab-content active" id="create-quiz-tab">
+                <div class="card">
+                    <form id="create-quiz-form">
+                        <div class="form-group">
+                            <label for="quiz-course">Sélectionner un cours *</label>
+                            <select id="quiz-course" required>
+                                <option value="">Choisir un cours</option>
+                                <!-- Chargé dynamiquement -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quiz-title">Titre du quiz *</label>
+                            <input type="text" id="quiz-title" placeholder="Ex: Quiz sur JavaScript - Chapitre 1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quiz-type">Type de quiz</label>
+                            <select id="quiz-type">
+                                <option value="practice">Pratique</option>
+                                <option value="graded">Noté</option>
+                                <option value="exam">Examen</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quiz-description">Description</label>
+                            <textarea id="quiz-description" rows="3" placeholder="Décrivez le contenu du quiz..."></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quiz-time-limit">Limite de temps (minutes)</label>
+                                <input type="number" id="quiz-time-limit" min="0" placeholder="0 = illimité">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="quiz-passing-score">Score de réussite (%)</label>
+                                <input type="number" id="quiz-passing-score" min="0" max="100" value="60">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="quiz-availability">Disponibilité</label>
+                            <div class="form-row">
+                                <input type="datetime-local" id="quiz-available-from" placeholder="Disponible à partir de">
+                                <input type="datetime-local" id="quiz-available-until" placeholder="Disponible jusqu'à">
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h3>Questions du quiz</h3>
+                        <div id="quiz-questions-container">
+                            <!-- Questions ajoutées dynamiquement -->
+                        </div>
+                        
+                        <button type="button" class="btn-add-question" onclick="addQuestion()">
+                            <i class="fas fa-plus"></i> Ajouter une question
+                        </button>
+                        
+                        <div class="form-buttons" style="margin-top: 20px;">
+                            <button type="submit" class="btn-submit">
+                                <i class="fas fa-save"></i> Enregistrer le quiz
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Gestion des quiz -->
+            <div class="tab-content" id="manage-quizzes-tab">
+                <div class="card">
+                    <h3>Quiz existants</h3>
+                    <div id="quizzes-list">
+                        <!-- Quiz chargés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Création de devoirs -->
+            <div class="tab-content" id="create-assignment-tab">
+                <div class="card">
+                    <form id="create-assignment-form">
+                        <div class="form-group">
+                            <label for="assignment-course">Sélectionner un cours *</label>
+                            <select id="assignment-course" required>
+                                <option value="">Choisir un cours</option>
+                                <!-- Chargé dynamiquement -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assignment-title">Titre du devoir *</label>
+                            <input type="text" id="assignment-title" placeholder="Ex: Projet HTML/CSS" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assignment-description">Instructions *</label>
+                            <textarea id="assignment-description" rows="6" placeholder="Décrivez les instructions du devoir..." required></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assignment-type">Type de devoir</label>
+                                <select id="assignment-type">
+                                    <option value="individual">Individuel</option>
+                                    <option value="group">Groupe</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="assignment-max-points">Points maximum</label>
+                                <input type="number" id="assignment-max-points" min="0" step="0.5" value="100">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assignment-due-date">Date limite de soumission *</label>
+                            <input type="datetime-local" id="assignment-due-date" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="assignment-files">Fichiers joints (optionnel)</label>
+                            <input type="file" id="assignment-files" multiple>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-save"></i> Créer le devoir
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Notation des devoirs -->
+            <div class="tab-content" id="grade-assignments-tab">
+                <div class="card">
+                    <h3>Devoirs soumis à noter</h3>
+                    <div id="submissions-to-grade">
+                        <!-- Soumissions chargées dynamiquement -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Forum -->
+        <div id="forum-section" style="display: none;">
+            <h1>Gestion du Forum</h1>
+            
+            <div class="tabs">
+                <button class="tab active" data-tab="forum-topics">Topics du Forum</button>
+                <button class="tab" data-tab="forum-moderation">Modération</button>
+                <button class="tab" data-tab="forum-announcements">Annonces</button>
+            </div>
+            
+            <!-- Topics du forum -->
+            <div class="tab-content active" id="forum-topics-tab">
+                <div class="card">
+                    <div class="forum-header">
+                        <h3>Topics par cours</h3>
+                        <button class="btn-create-topic" onclick="showCreateTopicModal()">
+                            <i class="fas fa-plus"></i> Nouveau topic
+                        </button>
+                    </div>
+                    
+                    <div id="forum-topics-list">
+                        <!-- Topics chargés dynamiquement -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modération -->
+            <div class="tab-content" id="forum-moderation-tab">
+                <div class="card">
+                    <h3>Modération du forum</h3>
+                    <div id="moderation-queue">
+                        <!-- Messages à modérer -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Annonces -->
+            <div class="tab-content" id="forum-announcements-tab">
+                <div class="card">
+                    <h3>Gestion des annonces</h3>
+                    <form id="create-announcement-form">
+                        <div class="form-group">
+                            <label for="announcement-course">Cours concerné</label>
+                            <select id="announcement-course" required>
+                                <option value="">Choisir un cours</option>
+                                <!-- Chargé dynamiquement -->
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="announcement-title">Titre de l'annonce *</label>
+                            <input type="text" id="announcement-title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="announcement-content">Contenu *</label>
+                            <textarea id="announcement-content" rows="6" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="announcement-pin">
+                                Épingler cette annonce
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn-submit">
+                            <i class="fas fa-bullhorn"></i> Publier l'annonce
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="question-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Ajouter une question</h3>
+                <button class="close-modal" onclick="closeQuestionModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="question-form">
+                    <div class="form-group">
+                        <label for="question-type">Type de question</label>
+                        <select id="question-type">
+                            <option value="multiple_choice">Choix multiple</option>
+                            <option value="true_false">Vrai/Faux</option>
+                            <option value="short_answer">Réponse courte</option>
+                            <option value="essay">Dissertation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="question-text">Question *</label>
+                        <textarea id="question-text" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="question-points">Points</label>
+                        <input type="number" id="question-points" min="1" value="1">
+                    </div>
+                    
+                    <div id="options-section">
+                        <h4>Options de réponse</h4>
+                        <div id="options-list">
+                            <!-- Options dynamiques -->
+                        </div>
+                        <button type="button" onclick="addOption()">Ajouter une option</button>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit">Ajouter la question</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="frontend/js/teacher.js"></script>
+    <script src="frontend/js/logout.js"></script>
+    <script src="frontend/js/api.js"></script>
+</body>
+</html>

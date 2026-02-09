@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription - EduPlatform</title>
+    <link rel="stylesheet" href="frontend/css/style.css">
+    <link rel="stylesheet" href="frontend/css/register.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        /* Styles spécifiques pour cette page */
+        .register-section {
+            min-height: calc(100vh - 200px);
+            padding: 4rem 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .register-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .register-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+        
+        .role-selection {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .role-option input[type="radio"] {
+            display: none;
+        }
+        
+        .role-option label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            background: white;
+        }
+        
+        .role-option label:hover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        .role-option input[type="radio"]:checked + label {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea15, #764ba215);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.2);
+        }
+        
+        .role-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .role-option span:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .role-fields {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .role-fields h4 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #c33;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #c3e6cb;
+            display: none;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .register-footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e0e0e0;
+        }
+        
+        .register-footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .register-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 768px) {
+            .register-box {
+                padding: 2rem 1.5rem;
+            }
+            
+            .role-selection {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📚 EduPlatform</h1>
+                </div>
+                
+                <nav class="nav-links">
+                    <a href="index.html">Accueil</a>
+                    <a href="index.html#courses">Cours</a>
+                    <a href="login.html" class="btn-login">Connexion</a>
+                    <a href="register.html" class="btn-register">Inscription</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Section d'inscription -->
+    <section class="register-section">
+        <div class="container">
+            <div class="register-container">
+                <div class="register-box">
+                    <h2>Créer un compte</h2>
+                    <p class="register-subtitle">Rejoignez EduPlatform en tant qu'étudiant ou enseignant</p>
+                    
+                    <form id="registerForm">
+                        <!-- Choix du rôle -->
+                        <div class="form-group">
+                            <label>Je m'inscris en tant que :</label>
+                            <div class="role-selection">
+                                <div class="role-option">
+                                    <input type="radio" id="roleStudent" name="role" value="student" checked>
+                                    <label for="roleStudent">
+                                        <span class="role-icon">🎓</span>
+                                        <span>Étudiant</span>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input type="radio" id="roleTeacher" name="role" value="teacher">
+                                    <label for="roleTeacher">
+                                        <span class="role-icon">👨‍🏫</span>
+                                        <span>Enseignant</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Informations personnelles -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="firstName">Prénom *</label>
+                                <input type="text" id="firstName" name="firstName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lastName">Nom *</label>
+                                <input type="text" id="lastName" name="lastName" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Champs Étudiant -->
+                        <div id="studentFields" class="role-fields">
+                            <h4>Informations étudiant</h4>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="studentCard">Numéro de carte étudiant *</label>
+                                    <input type="text" id="studentCard" name="studentCard">
+                                </div>
+                                <div class="form-group">
+                                    <label for="year">Année d'études *</label>
+                                    <select id="year" name="year">
+                                        <option value="">Choisir...</option>
+                                        <option value="L1">Licence 1</option>
+                                        <option value="L2">Licence 2</option>
+                                        <option value="L3">Licence 3</option>
+                                        <option value="M1">Master 1</option>
+                                        <option value="M2">Master 2</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Champs Enseignant -->
+                        <div id="teacherFields" class="role-fields" style="display: none;">
+                            <h4>Informations enseignant</h4>
+                            <div class="form-group">
+                                <label for="specialty">Spécialité *</label>
+                                <input type="text" id="specialty" name="specialty">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Téléphone (optionnel)</label>
+                                <input type="tel" id="phone" name="phone">
+                            </div>
+                        </div>
+                        
+                        <!-- Email et mot de passe -->
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Mot de passe *</label>
+                                <input type="password" id="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirmer le mot de passe *</label>
+                                <input type="password" id="confirmPassword" name="confirmPassword" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Messages -->
+                        <div id="errorMessage" class="error-message"></div>
+                        <div id="successMessage" class="success-message"></div>
+                        
+                        <!-- Bouton d'inscription -->
+                        <button type="submit" class="btn-submit" id="submitBtn">Créer mon compte</button>
+                    </form>
+                    
+                    <div class="register-footer">
+                        <p>Vous avez déjà un compte ? <a href="login.html">Connectez-vous ici</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EduPlatform</h4>
+                    <p>Plateforme d'apprentissage en ligne pour étudiants en informatique</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Liens rapides</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="index.html#courses">Cours</a></li>
+                        <li><a href="login.html">Connexion</a></li>
+                        <li><a href="register.html">Inscription</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📧 contact@eduplatform.com</p>
+                    <p>📞 +212 6XX XXX XXX</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 EduPlatform. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script src="frontend/js/register.js"></script>
+</body>
+</html>

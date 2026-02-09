@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard - EduPlatform</title>
+    <link rel="stylesheet" href="frontend/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<header class="navbar">
+    <h2>EduPlatform - Admin</h2>
+    <nav class="nav-links">
+        <a href="#" class="active" onclick="showSection('dashboard')">Tableau de bord</a>
+        <a href="#" onclick="showSection('teachers')">Enseignants</a>
+        <a href="#" onclick="showSection('courses')">Cours</a>
+        <a href="#" onclick="showSection('students')">Étudiants</a>
+    </nav>
+    <button class="logout" onclick="logout()">Déconnexion</button>
+</header>
+
+<div class="container">
+    <!-- Content -->
+    <main class="content">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section active">
+            <h1>Tableau de bord</h1>
+            <div class="cards">
+                <div class="card">
+                    <h3><i class="fas fa-users"></i> Utilisateurs</h3>
+                    <p>Gérer les enseignants et étudiants</p>
+                    <button onclick="showSection('teachers')">Voir les enseignants</button>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-book"></i> Cours</h3>
+                    <p>Gérer tous les cours de la plateforme</p>
+                    <button onclick="showSection('courses')">Voir les cours</button>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
+                    <p>Voir les statistiques d'utilisation</p>
+                    <button onclick="showStats()">Afficher les stats</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teachers Section -->
+        <div id="teachers-section" class="section" style="display: none;">
+            <h1>Gestion des Enseignants</h1>
+            <div class="card">
+                <h3>Ajouter un enseignant</h3>
+                <form id="add-teacher-form">
+                    <input type="text" placeholder="Nom complet" required>
+                    <input type="email" placeholder="Email" required>
+                    <input type="text" placeholder="Spécialité" required>
+                    <button type="submit">Ajouter l'enseignant</button>
+                </form>
+            </div>
+            <div class="card">
+                <h3>Liste des enseignants</h3>
+                <div id="teachers-list">
+                    <!-- Liste dynamique -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses Section -->
+        <div id="courses-section" class="section" style="display: none;">
+            <h1>Gestion des Cours</h1>
+            <div class="card">
+                <h3>Créer un nouveau cours</h3>
+                <form id="add-course-form">
+                    <input type="text" placeholder="Titre du cours" required>
+                    <select required>
+                        <option value="">Sélectionner une catégorie</option>
+                        <option>Développement Web</option>
+                        <option>Data Science</option>
+                        <option>Intelligence Artificielle</option>
+                        <option>Cybersécurité</option>
+                    </select>
+                    <textarea placeholder="Description" rows="3"></textarea>
+                    <button type="submit">Créer le cours</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Students Section -->
+        <div id="students-section" class="section" style="display: none;">
+            <h1>Gestion des Étudiants</h1>
+            <div class="card">
+                <h3>Liste des étudiants</h3>
+                <div id="students-list">
+                    <!-- Liste dynamique -->
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="frontend/js/admin.js"></script>
+<script src="frontend/js/logout.js"></script>
+<script src="frontend/js/config.js"></script>
+</body>
+</html>

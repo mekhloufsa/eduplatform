@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - EduPlatform</title>
+    <link rel="stylesheet" href="frontend/css/style.css">
+    <link rel="stylesheet" href="frontend/css/login.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>📚 EduPlatform</h1>
+                </div>
+
+                <!-- Barre de recherche -->
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Rechercher un cours, enseignant...">
+                    <button type="button" id="searchBtn">🔍</button>
+                </div>
+
+                <nav class="nav-links">
+                    <a href="index.html">Accueil</a>
+                    <a href="index.html#courses">Cours</a>
+                    <a href="login.html" class="btn-login">Connexion</a>
+                    <a href="register.html" class="btn-register">Inscription</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section de connexion -->
+    <section class="login-section">
+        <div class="container">
+            <div class="login-container">
+                <div class="login-box">
+                    <h2>Connexion</h2>
+                    <p class="login-subtitle">Accédez à votre espace personnel</p>
+
+                    <form id="loginForm" class="login-form">
+                        <!-- Choix du rôle -->
+                        <div class="form-group">
+                            <label>Je suis :</label>
+                            <div class="role-selection">
+                                <div class="role-option">
+                                    <input type="radio" id="roleStudent" name="role" value="student" checked>
+                                    <label for="roleStudent">
+                                        <span class="role-icon">🎓</span>
+                                        <span>Étudiant</span>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input type="radio" id="roleTeacher" name="role" value="teacher">
+                                    <label for="roleTeacher">
+                                        <span class="role-icon">👨‍🏫</span>
+                                        <span>Enseignant</span>
+                                    </label>
+                                </div>
+                                <div class="role-option">
+                                    <input type="radio" id="roleAdmin" name="role" value="admin">
+                                    <label for="roleAdmin">
+                                        <span class="role-icon">⚙️</span>
+                                        <span>Administrateur</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="form-group">
+                            <label for="email">Adresse Email</label>
+                            <input type="email" id="email" name="email" placeholder="exemple@email.com" required>
+                        </div>
+
+                        <!-- Mot de passe -->
+                        <div class="form-group">
+                            <label for="password">Mot de passe</label>
+                            <div class="password-input">
+                                <input type="password" id="password" name="password" placeholder="••••••••" required>
+                                <button type="button" class="toggle-password" id="togglePassword">👁️</button>
+                            </div>
+                        </div>
+
+                        <!-- Se souvenir de moi -->
+                        <div class="form-group checkbox-group">
+                            <label>
+                                <input type="checkbox" id="rememberMe" name="rememberMe">
+                                <span>Se souvenir de moi</span>
+                            </label>
+                            <a href="#" class="forgot-password">Mot de passe oublié ?</a>
+                        </div>
+
+                        <!-- Message d'erreur -->
+                        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+                        <!-- Bouton de connexion -->
+                        <button type="submit" class="btn-submit">Se connecter</button>
+                    </form>
+
+                    <div class="login-footer">
+                        <p>Vous n'avez pas de compte ? <a href="register.html">Inscrivez-vous ici</a></p>
+                    </div>
+                </div>
+
+                <!-- Informations supplémentaires -->
+                <div class="login-info">
+                    <h3>Bienvenue sur EduPlatform ! 🎓</h3>
+                    <div class="info-items">
+                        <div class="info-item">
+                            <span class="info-icon">📚</span>
+                            <div>
+                                <h4>Accès aux cours</h4>
+                                <p>Consultez tous vos cours et supports en un clic</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">💬</span>
+                            <div>
+                                <h4>Forums de discussion</h4>
+                                <p>Échangez avec vos enseignants et collègues</p>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-icon">📊</span>
+                            <div>
+                                <h4>Suivi de progression</h4>
+                                <p>Suivez votre évolution avec les quiz et examens</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>EduPlatform</h4>
+                    <p>Plateforme d'apprentissage en ligne pour étudiants en informatique</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Liens rapides</h4>
+                    <ul>
+                        <li><a href="index.html">Accueil</a></li>
+                        <li><a href="index.html#courses">Cours</a></li>
+                        <li><a href="login.html">Connexion</a></li>
+                        <li><a href="register.html">Inscription</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📧 contact@eduplatform.com</p>
+                    <p>📞 +212 6XX XXX XXX</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 EduPlatform. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="frontend/js/script.js"></script>
+    <script src="frontend/js/login.js"></script>
+</body>
+</html>

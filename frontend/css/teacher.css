@@ -1,0 +1,315 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+    background: linear-gradient(90deg, #5f6cff, #8e5cff);
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: white;
+}
+
+.navbar h2 {
+    font-size: 22px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.logout {
+    background: white;
+    color: #5f6cff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Container */
+.container {
+    background-color: #f5f7fb;
+    min-height: calc(100vh - 70px);
+    padding: 40px;
+}
+
+.container h1 {
+    text-align: center;
+    margin-bottom: 40px;
+    color: #2f3542;
+}
+
+/* Cards */
+.cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+}
+
+.card h3 {
+    color: #5f6cff;
+    margin-bottom: 15px;
+}
+
+/* Forms */
+form input,
+form select,
+form textarea {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+form textarea {
+    resize: none;
+    height: 80px;
+}
+
+form button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(90deg, #5f6cff, #8e5cff);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+form button:hover {
+    opacity: 0.9;
+}
+
+/* Liste des cours créés */
+.courses-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.course-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+}
+
+.course-item:hover {
+    transform: translateY(-5px);
+}
+
+.course-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 15px;
+}
+
+.course-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.course-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: #5f6cff;
+    color: white;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.3s;
+}
+
+.course-btn:hover {
+    background: #4a58ff;
+}
+
+/* File upload */
+.file-upload {
+    border: 2px dashed #5f6cff;
+    padding: 30px;
+    text-align: center;
+    border-radius: 12px;
+    margin: 15px 0;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.file-upload:hover {
+    background: #f8f9ff;
+}
+
+.file-upload input {
+    display: none;
+}
+
+.file-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    background: #f0f2ff;
+    border-radius: 8px;
+}
+
+/* Options d'inscription */
+.enrollment-options {
+    margin: 20px 0;
+    padding: 20px;
+    background: #f8f9ff;
+    border-radius: 10px;
+    border: 2px solid #e0e2ff;
+}
+
+.enrollment-options h3 {
+    margin-top: 0;
+    color: #5f6cff;
+    font-size: 1.2rem;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.form-group small {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+#key-settings {
+    margin-top: 15px;
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0e2ff;
+}
+
+.btn-generate {
+    background: #5f6cff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s;
+    margin-top: 10px;
+}
+
+.btn-generate:hover {
+    background: #4a58ff;
+}
+
+.note {
+    text-align: center;
+    color: #666;
+    margin-top: 15px;
+    padding: 10px;
+    background: #e8f0fe;
+    border-radius: 6px;
+}
+
+/* Informations du cours */
+.course-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.course-info span {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.course-info strong {
+    color: #333;
+}
+
+/* État vide */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+    grid-column: 1 / -1;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .container {
+        padding: 20px;
+    }
+    
+    .courses-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .course-info {
+        grid-template-columns: 1fr;
+    }
+}
