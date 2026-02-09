@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Espace Enseignant - EduPlatform</title>
     <link rel="stylesheet" href="frontend/css/teacher.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
         .tabs {
             display: flex;
@@ -13,7 +15,7 @@
             border-bottom: 2px solid #e0e2ff;
             padding-bottom: 10px;
         }
-        
+
         .tab {
             padding: 10px 20px;
             background: #f8f9ff;
@@ -24,121 +26,232 @@
             color: #666;
             transition: all 0.3s;
         }
-        
+
+        .tab:hover {
+            background: #e0e2ff;
+        }
+
         .tab.active {
             background: #5f6cff;
             color: white;
         }
-        
+
         .tab-content {
             display: none;
             animation: fadeIn 0.3s;
         }
-        
+
         .tab-content.active {
             display: block;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        .quiz-question {
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Upload de fichiers */
+        .file-upload-area {
+            border: 3px dashed #5f6cff;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
             background: #f8f9ff;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid #5f6cff;
-        }
-        
-        .question-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .question-actions {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .question-actions button {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
+            transition: all 0.3s;
+            margin: 20px 0;
         }
-        
-        .question-actions button:hover {
-            background: #5a6268;
+
+        .file-upload-area:hover {
+            background: #e8ebff;
+            border-color: #4a58ff;
         }
-        
-        .option-item {
+
+        .file-upload-area.dragover {
+            background: #e0e2ff;
+            border-color: #4a58ff;
+            transform: scale(1.02);
+        }
+
+        .file-upload-area i {
+            font-size: 48px;
+            color: #5f6cff;
+            margin-bottom: 15px;
+        }
+
+        .file-list {
+            margin-top: 20px;
+        }
+
+        .file-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 8px;
-            padding: 8px;
+            justify-content: space-between;
+            padding: 12px;
             background: white;
-            border-radius: 4px;
-        }
-        
-        .correct-option {
-            border: 2px solid #28a745;
-            background: #d4edda;
-        }
-        
-        .assignment-item, .forum-topic-item {
-            background: white;
-            padding: 15px;
             border-radius: 8px;
             margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
-        
+
+        .file-item i {
+            color: #5f6cff;
+            margin-right: 10px;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            color: #333;
+        }
+
+        .file-item .file-size {
+            color: #666;
+            font-size: 0.9rem;
+            margin-right: 15px;
+        }
+
+        .file-item .remove-file {
+            color: #dc3545;
+            cursor: pointer;
+            padding: 5px;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
-        
+
         .stat-card {
             background: white;
             padding: 20px;
             border-radius: 8px;
             text-align: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
             color: #5f6cff;
             margin-bottom: 5px;
         }
-        
+
         .stat-label {
             color: #666;
             font-size: 0.9rem;
         }
+
+        .btn-create {
+            background: #5f6cff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-create:hover {
+            background: #4a58ff;
+            transform: translateY(-2px);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #5f6cff;
+            outline: none;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .course-item {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .course-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .course-item p {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .course-meta {
+            display: flex;
+            gap: 20px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <header class="navbar">
         <h2>EduPlatform | Enseignant</h2>
         <nav class="nav-links">
-            <a href="#" class="active" id="nav-dashboard">Tableau de bord</a>
-            <a href="#" id="nav-courses">Mes Cours</a>
-            <a href="#" id="nav-create">Créer un Cours</a>
-            <a href="#" id="nav-quizzes">Quiz & Évaluations</a>
-            <a href="#" id="nav-forum">Forum</a>
+            <a href="#" class="active" id="nav-dashboard" onclick="showSection('dashboard')">Tableau de bord</a>
+            <a href="#" id="nav-courses" onclick="showSection('courses')">Mes Cours</a>
+            <a href="#" id="nav-create" onclick="showSection('create')">Créer un Cours</a>
+            <a href="#" id="nav-quizzes" onclick="showSection('quizzes')">Quiz & Évaluations</a>
+            <a href="#" id="nav-forum" onclick="showSection('forum')">Forum</a>
         </nav>
         <button class="logout" onclick="logout()">Déconnexion</button>
     </header>
@@ -146,9 +259,9 @@
     <!-- Content -->
     <div class="container">
         <!-- Tableau de bord -->
-        <div id="dashboard-section" class="active-section">
+        <div id="dashboard-section" class="section active">
             <h1>Tableau de bord Enseignant</h1>
-            
+
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-value" id="total-courses">0</div>
@@ -167,209 +280,91 @@
                     <div class="stat-label">Devoirs en attente</div>
                 </div>
             </div>
-            
+
             <div class="card" style="margin-top: 30px;">
                 <h3>Activités récentes</h3>
                 <div id="recent-activities">
-                    <!-- Activités chargées dynamiquement -->
+                    <p style="color: #666; text-align: center; padding: 20px;">Aucune activité récente</p>
                 </div>
             </div>
         </div>
 
         <!-- Section Mes Cours -->
-        <div id="courses-section" style="display: none;">
-            <h1>Mes Cours Créés</h1>
-            
-            <div class="tabs">
-                <button class="tab active" data-tab="active-courses">Cours Actifs</button>
-                <button class="tab" data-tab="draft-courses">Brouillons</button>
-                <button class="tab" data-tab="archived-courses">Archivés</button>
+        <div id="courses-section" class="section">
+            <h1>Mes Cours</h1>
+
+            <div id="courses-list">
+                <p style="color: #666; text-align: center; padding: 40px;">Chargement des cours...</p>
             </div>
-            
-            <div class="tab-content active" id="active-courses-tab">
-                <div class="courses-list" id="active-courses-list">
-                    <!-- Cours actifs chargés dynamiquement -->
-                </div>
-            </div>
-            
-            <div class="tab-content" id="draft-courses-tab">
-                <div class="courses-list" id="draft-courses-list">
-                    <!-- Cours brouillons -->
-                </div>
-            </div>
-            
-            <div class="tab-content" id="archived-courses-tab">
-                <div class="courses-list" id="archived-courses-list">
-                    <!-- Cours archivés -->
-                </div>
-            </div>
-            
-            <button class="btn-create" onclick="showCreateSection()" style="margin-top: 20px;">
+
+            <button class="btn-create" onclick="showSection('create')" style="margin-top: 20px;">
                 <i class="fas fa-plus"></i> Créer un nouveau cours
             </button>
         </div>
 
         <!-- Section Création de Cours -->
-        <div id="create-section" style="display: none;">
+        <div id="create-section" class="section">
             <h1>Créer un Nouveau Cours</h1>
-            
-            <div class="tabs">
-                <button class="tab active" data-tab="course-info">Informations du cours</button>
-                <button class="tab" data-tab="course-content">Contenu du cours</button>
-                <button class="tab" data-tab="course-evaluations">Évaluations</button>
-                <button class="tab" data-tab="course-settings">Paramètres</button>
-            </div>
-            
+
             <form id="create-course-form">
-                <!-- Onglet Informations -->
-                <div class="tab-content active" id="course-info-tab">
+                <div class="card">
+                    <h3>Informations du cours</h3>
+
                     <div class="form-group">
                         <label for="course-title">Titre du cours *</label>
                         <input type="text" id="course-title" placeholder="Ex: Introduction à JavaScript" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="course-category">Catégorie *</label>
                         <select id="course-category" required>
                             <option value="">Sélectionnez une catégorie</option>
-                            <option>Développement Web</option>
-                            <option>Data Science</option>
-                            <option>Intelligence Artificielle</option>
-                            <option>Cybersécurité</option>
-                            <option>Développement Mobile</option>
+                            <option value="Développement Web">Développement Web</option>
+                            <option value="Data Science">Data Science</option>
+                            <option value="Intelligence Artificielle">Intelligence Artificielle</option>
+                            <option value="Cybersécurité">Cybersécurité</option>
+                            <option value="Développement Mobile">Développement Mobile</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="course-description">Description *</label>
-                        <textarea id="course-description" rows="4" placeholder="Décrivez votre cours..." required></textarea>
+                        <textarea id="course-description" rows="4" placeholder="Décrivez votre cours..."
+                            required></textarea>
                     </div>
-                    
+                </div>
+
+                <!-- Upload de fichiers -->
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Supports de cours (optionnel)</h3>
+                    <p style="color: #666; margin-bottom: 15px;">Ajoutez des PDF, vidéos, images ou autres fichiers</p>
+
+                    <div class="file-upload-area" id="file-upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p><strong>Cliquez pour sélectionner des fichiers</strong></p>
+                        <p>ou glissez-déposez ici</p>
+                        <p style="font-size: 0.85rem; color: #999;">PDF, DOC, PPT, MP4, MP3, JPG, PNG (max 10MB)</p>
+                        <input type="file" id="course-files" multiple
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mp3,.jpg,.jpeg,.png,.gif,.zip,.rar"
+                            style="display: none;">
+                    </div>
+
+                    <div class="file-list" id="file-list"></div>
+                </div>
+
+                <div class="card" style="margin-top: 20px;">
+                    <h3>Paramètres</h3>
                     <div class="form-group">
-                        <label for="course-objectives">Objectifs d'apprentissage</label>
-                        <textarea id="course-objectives" rows="3" placeholder="Listez les objectifs que les étudiants atteindront..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="course-prerequisites">Prérequis</label>
-                        <textarea id="course-prerequisites" rows="2" placeholder="Connaissances requises pour suivre ce cours..."></textarea>
+                        <label for="course-visibility">Visibilité du cours</label>
+                        <select id="course-visibility">
+                            <option value="public">Public (visible à tous)</option>
+                            <option value="private">Privé (uniquement avec lien)</option>
+                        </select>
                     </div>
                 </div>
-                
-                <!-- Onglet Contenu -->
-                <div class="tab-content" id="course-content-tab">
-                    <h3>Supports de cours</h3>
-                    
-                    <div class="materials-section">
-                        <div class="file-upload" id="materials-upload">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Glissez-déposez des fichiers ou cliquez pour sélectionner</p>
-                            <input type="file" id="course-materials" multiple accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.mp4,.avi,.mov,.mp3,.zip,.rar">
-                            <small>Formats acceptés: PDF, DOC, PPT, Images, Vidéos, Audio, Archives (Max: 10MB)</small>
-                        </div>
-                        
-                        <div id="materials-list" class="materials-list">
-                            <!-- Liste des supports ajoutés -->
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="main-content">Contenu principal (HTML/Text)</label>
-                            <textarea id="main-content" rows="8" placeholder="Vous pouvez écrire le contenu principal du cours ici en HTML ou texte simple..."></textarea>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Onglet Évaluations -->
-                <div class="tab-content" id="course-evaluations-tab">
-                    <h3>Configuration des évaluations</h3>
-                    
-                    <div class="evaluation-options">
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="enable-quizzes">
-                                <span>Activer les quiz pour ce cours</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="enable-assignments">
-                                <span>Activer les devoirs</span>
-                            </label>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="enable-exam">
-                                <span>Activer l'examen final</span>
-                            </label>
-                        </div>
-                        
-                        <div id="quiz-settings" style="margin-top: 20px; display: none;">
-                            <h4>Paramètres des quiz</h4>
-                            <div class="form-group">
-                                <label for="default-passing-score">Score de réussite par défaut (%)</label>
-                                <input type="number" id="default-passing-score" min="0" max="100" value="60">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="max-quiz-attempts">Tentatives maximum par quiz</label>
-                                <input type="number" id="max-quiz-attempts" min="1" max="10" value="3">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Onglet Paramètres -->
-                <div class="tab-content" id="course-settings-tab">
-                    <h3>Paramètres d'accès</h3>
-                    
-                    <div class="enrollment-options">
-                        <div class="form-group">
-                            <label for="course-visibility">Visibilité du cours</label>
-                            <select id="course-visibility">
-                                <option value="public">Public (visible à tous)</option>
-                                <option value="private">Privé (seulement avec clé)</option>
-                                <option value="draft">Brouillon (invisible)</option>
-                            </select>
-                        </div>
-                        
-                        <div id="private-settings" style="display: none;">
-                            <div class="form-group">
-                                <label for="enrollment-key">Clé d'inscription *</label>
-                                <input type="text" id="enrollment-key" placeholder="Ex: WINTER2024" maxlength="20">
-                                <button type="button" id="generate-key" class="btn-generate">
-                                    <i class="fas fa-random"></i> Générer une clé
-                                </button>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="max-enrollments">Limite d'inscriptions</label>
-                                <input type="number" id="max-enrollments" placeholder="0 = illimité" min="0">
-                                <small>Nombre maximum d'étudiants (0 = illimité)</small>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="course-start-date">Date de début</label>
-                            <input type="date" id="course-start-date">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="course-end-date">Date de fin</label>
-                            <input type="date" id="course-end-date">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="form-buttons" style="margin-top: 30px;">
-                    <button type="button" class="btn-prev" onclick="prevTab()">
-                        <i class="fas fa-arrow-left"></i> Précédent
-                    </button>
-                    <button type="button" class="btn-next" onclick="nextTab()">
-                        Suivant <i class="fas fa-arrow-right"></i>
-                    </button>
-                    <button type="submit" class="btn-submit" id="submit-course">
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn-create" id="submit-course">
                         <i class="fas fa-save"></i> Créer le cours
                     </button>
                 </div>
@@ -377,285 +372,481 @@
         </div>
 
         <!-- Section Quiz & Évaluations -->
-        <div id="quizzes-section" style="display: none;">
-            <h1>Gestion des Quiz & Évaluations</h1>
-            
+        <div id="quizzes-section" class="section">
+            <h1>Quiz & Évaluations</h1>
+
             <div class="tabs">
-                <button class="tab active" data-tab="create-quiz">Créer un Quiz</button>
-                <button class="tab" data-tab="manage-quizzes">Gérer les Quiz</button>
-                <button class="tab" data-tab="create-assignment">Créer un Devoir</button>
-                <button class="tab" data-tab="grade-assignments">Noter les Devoirs</button>
+                <button class="tab active" onclick="switchTab(this, 'create-quiz')">Créer un Quiz</button>
+                <button class="tab" onclick="switchTab(this, 'manage-quizzes')">Mes Quiz</button>
+                <button class="tab" onclick="switchTab(this, 'create-assignment')">Créer un Devoir</button>
             </div>
-            
-            <!-- Création de quiz -->
-            <div class="tab-content active" id="create-quiz-tab">
+
+            <div id="create-quiz" class="tab-content active">
                 <div class="card">
                     <form id="create-quiz-form">
                         <div class="form-group">
-                            <label for="quiz-course">Sélectionner un cours *</label>
+                            <label for="quiz-course">Cours concerné *</label>
                             <select id="quiz-course" required>
                                 <option value="">Choisir un cours</option>
-                                <!-- Chargé dynamiquement -->
                             </select>
                         </div>
-                        
                         <div class="form-group">
                             <label for="quiz-title">Titre du quiz *</label>
-                            <input type="text" id="quiz-title" placeholder="Ex: Quiz sur JavaScript - Chapitre 1" required>
+                            <input type="text" id="quiz-title" placeholder="Ex: Quiz - Chapitre 1" required>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="quiz-type">Type de quiz</label>
-                            <select id="quiz-type">
-                                <option value="practice">Pratique</option>
-                                <option value="graded">Noté</option>
-                                <option value="exam">Examen</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="quiz-description">Description</label>
-                            <textarea id="quiz-description" rows="3" placeholder="Décrivez le contenu du quiz..."></textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="quiz-time-limit">Limite de temps (minutes)</label>
-                                <input type="number" id="quiz-time-limit" min="0" placeholder="0 = illimité">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="quiz-passing-score">Score de réussite (%)</label>
-                                <input type="number" id="quiz-passing-score" min="0" max="100" value="60">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="quiz-availability">Disponibilité</label>
-                            <div class="form-row">
-                                <input type="datetime-local" id="quiz-available-from" placeholder="Disponible à partir de">
-                                <input type="datetime-local" id="quiz-available-until" placeholder="Disponible jusqu'à">
-                            </div>
-                        </div>
-                        
-                        <hr>
-                        
-                        <h3>Questions du quiz</h3>
-                        <div id="quiz-questions-container">
-                            <!-- Questions ajoutées dynamiquement -->
-                        </div>
-                        
-                        <button type="button" class="btn-add-question" onclick="addQuestion()">
-                            <i class="fas fa-plus"></i> Ajouter une question
-                        </button>
-                        
-                        <div class="form-buttons" style="margin-top: 20px;">
-                            <button type="submit" class="btn-submit">
-                                <i class="fas fa-save"></i> Enregistrer le quiz
-                            </button>
-                        </div>
+                        <button type="submit" class="btn-create">Créer le quiz</button>
                     </form>
                 </div>
             </div>
-            
-            <!-- Gestion des quiz -->
-            <div class="tab-content" id="manage-quizzes-tab">
+
+            <div id="manage-quizzes" class="tab-content">
                 <div class="card">
-                    <h3>Quiz existants</h3>
+                    <h3>Vos quiz</h3>
                     <div id="quizzes-list">
-                        <!-- Quiz chargés dynamiquement -->
+                        <p style="color: #666; text-align: center;">Aucun quiz créé</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- Création de devoirs -->
-            <div class="tab-content" id="create-assignment-tab">
+
+            <div id="create-assignment" class="tab-content">
                 <div class="card">
                     <form id="create-assignment-form">
                         <div class="form-group">
-                            <label for="assignment-course">Sélectionner un cours *</label>
+                            <label for="assignment-course">Cours concerné *</label>
                             <select id="assignment-course" required>
                                 <option value="">Choisir un cours</option>
-                                <!-- Chargé dynamiquement -->
                             </select>
                         </div>
-                        
                         <div class="form-group">
                             <label for="assignment-title">Titre du devoir *</label>
-                            <input type="text" id="assignment-title" placeholder="Ex: Projet HTML/CSS" required>
+                            <input type="text" id="assignment-title" placeholder="Ex: Projet final" required>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="assignment-description">Instructions *</label>
-                            <textarea id="assignment-description" rows="6" placeholder="Décrivez les instructions du devoir..." required></textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="assignment-type">Type de devoir</label>
-                                <select id="assignment-type">
-                                    <option value="individual">Individuel</option>
-                                    <option value="group">Groupe</option>
-                                </select>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="assignment-max-points">Points maximum</label>
-                                <input type="number" id="assignment-max-points" min="0" step="0.5" value="100">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="assignment-due-date">Date limite de soumission *</label>
-                            <input type="datetime-local" id="assignment-due-date" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="assignment-files">Fichiers joints (optionnel)</label>
-                            <input type="file" id="assignment-files" multiple>
-                        </div>
-                        
-                        <button type="submit" class="btn-submit">
-                            <i class="fas fa-save"></i> Créer le devoir
-                        </button>
+                        <button type="submit" class="btn-create">Créer le devoir</button>
                     </form>
-                </div>
-            </div>
-            
-            <!-- Notation des devoirs -->
-            <div class="tab-content" id="grade-assignments-tab">
-                <div class="card">
-                    <h3>Devoirs soumis à noter</h3>
-                    <div id="submissions-to-grade">
-                        <!-- Soumissions chargées dynamiquement -->
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Section Forum -->
-        <div id="forum-section" style="display: none;">
-            <h1>Gestion du Forum</h1>
-            
-            <div class="tabs">
-                <button class="tab active" data-tab="forum-topics">Topics du Forum</button>
-                <button class="tab" data-tab="forum-moderation">Modération</button>
-                <button class="tab" data-tab="forum-announcements">Annonces</button>
-            </div>
-            
-            <!-- Topics du forum -->
-            <div class="tab-content active" id="forum-topics-tab">
-                <div class="card">
-                    <div class="forum-header">
-                        <h3>Topics par cours</h3>
-                        <button class="btn-create-topic" onclick="showCreateTopicModal()">
-                            <i class="fas fa-plus"></i> Nouveau topic
-                        </button>
-                    </div>
-                    
-                    <div id="forum-topics-list">
-                        <!-- Topics chargés dynamiquement -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Modération -->
-            <div class="tab-content" id="forum-moderation-tab">
-                <div class="card">
-                    <h3>Modération du forum</h3>
-                    <div id="moderation-queue">
-                        <!-- Messages à modérer -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Annonces -->
-            <div class="tab-content" id="forum-announcements-tab">
-                <div class="card">
-                    <h3>Gestion des annonces</h3>
-                    <form id="create-announcement-form">
-                        <div class="form-group">
-                            <label for="announcement-course">Cours concerné</label>
-                            <select id="announcement-course" required>
-                                <option value="">Choisir un cours</option>
-                                <!-- Chargé dynamiquement -->
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="announcement-title">Titre de l'annonce *</label>
-                            <input type="text" id="announcement-title" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="announcement-content">Contenu *</label>
-                            <textarea id="announcement-content" rows="6" required></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="announcement-pin">
-                                Épingler cette annonce
-                            </label>
-                        </div>
-                        
-                        <button type="submit" class="btn-submit">
-                            <i class="fas fa-bullhorn"></i> Publier l'annonce
-                        </button>
-                    </form>
-                </div>
-            </div>
+        <div id="forum-section" class="section">
+            <h1>Forum</h1>
+            <p style="color: #666; text-align: center; padding: 40px;">Fonctionnalité en développement</p>
         </div>
     </div>
 
-    <!-- Modals -->
-    <div class="modal" id="question-modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Ajouter une question</h3>
-                <button class="close-modal" onclick="closeQuestionModal()">×</button>
-            </div>
-            
-            <div class="modal-body">
-                <form id="question-form">
-                    <div class="form-group">
-                        <label for="question-type">Type de question</label>
-                        <select id="question-type">
-                            <option value="multiple_choice">Choix multiple</option>
-                            <option value="true_false">Vrai/Faux</option>
-                            <option value="short_answer">Réponse courte</option>
-                            <option value="essay">Dissertation</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="question-text">Question *</label>
-                        <textarea id="question-text" rows="3" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="question-points">Points</label>
-                        <input type="number" id="question-points" min="1" value="1">
-                    </div>
-                    
-                    <div id="options-section">
-                        <h4>Options de réponse</h4>
-                        <div id="options-list">
-                            <!-- Options dynamiques -->
-                        </div>
-                        <button type="button" onclick="addOption()">Ajouter une option</button>
-                    </div>
-                    
-                    <div class="form-buttons">
-                        <button type="submit">Ajouter la question</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+    <script>
+        // CORRECTION : Définition locale de l'API_BASE_URL
+        const API_BASE_URL = window.location.origin + '/eduplatform/backend/api';
+        let selectedFiles = [];
 
-    <script src="frontend/js/teacher.js"></script>
-    <script src="frontend/js/logout.js"></script>
-    <script src="frontend/js/api.js"></script>
+        // Fonction utilitaire pour les requêtes API
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE_URL}/${endpoint}`;
+            const token = localStorage.getItem('token');
+
+            const defaultOptions = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            };
+
+            if (token) {
+                defaultOptions.headers['Authorization'] = 'Bearer ' + token;
+            }
+
+            const finalOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: {
+                    ...defaultOptions.headers,
+                    ...options.headers
+                }
+            };
+
+            if (finalOptions.body && typeof finalOptions.body === 'object' && !(finalOptions.body instanceof FormData)) {
+                finalOptions.body = JSON.stringify(finalOptions.body);
+            }
+
+            const response = await fetch(url, finalOptions);
+
+            // Vérifier si la réponse est du JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            } else {
+                const text = await response.text();
+                console.error('Réponse non-JSON:', text.substring(0, 500));
+                throw new Error('La réponse du serveur n\'est pas au format JSON');
+            }
+        }
+
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionName + '-section').classList.add('active');
+
+            document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+            document.getElementById('nav-' + sectionName).classList.add('active');
+
+            if (sectionName === 'courses') loadTeacherCourses();
+            else if (sectionName === 'dashboard') loadTeacherDashboard();
+            else if (sectionName === 'quizzes') loadCoursesForSelect();
+        }
+
+        function switchTab(tab, contentId) {
+            tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            const section = tab.closest('.section');
+            section.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(contentId).classList.add('active');
+        }
+
+        async function loadTeacherDashboard() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!user.email) {
+                    console.error('Email utilisateur non trouvé');
+                    return;
+                }
+
+                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+
+                if (result.status === 'success') {
+                    const stats = result.data.stats || {};
+                    document.getElementById('total-courses').textContent = stats.total_courses || 0;
+                    document.getElementById('total-students').textContent = stats.total_students || 0;
+                    document.getElementById('total-quizzes').textContent = stats.total_quizzes || 0;
+                    document.getElementById('pending-assignments').textContent = stats.pending_assignments || 0;
+                }
+            } catch (e) {
+                console.error('Erreur dashboard:', e);
+            }
+        }
+
+
+        async function loadTeacherCourses() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!user.email) {
+                    console.error('Email utilisateur non trouvé');
+                    return;
+                }
+
+                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+                const container = document.getElementById('courses-list');
+
+                if (result.status === 'success') {
+                    const courses = result.data.courses || [];
+
+                    if (courses.length === 0) {
+                        container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Vous n\'avez pas encore créé de cours.</p>';
+                    } else {
+                        container.innerHTML = courses.map(c => `
+                    <div class="course-item">
+                        <h3>${escapeHtml(c.title)}</h3>
+                        <p>${escapeHtml(c.description)}</p>
+                        <div class="course-meta">
+                            <span><i class="fas fa-users"></i> ${c.enrollment_count || 0} étudiants</span>
+                            <span><i class="fas fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
+                            <span><i class="fas fa-tag"></i> ${escapeHtml(c.category)}</span>
+                        </div>
+                    </div>
+                `).join('');
+                    }
+                } else {
+                    container.innerHTML = '<p style="color: red; text-align: center;">' + (result.message || 'Erreur de chargement') + '</p>';
+                }
+            } catch (e) {
+                console.error('Erreur cours:', e);
+                document.getElementById('courses-list').innerHTML = '<p style="color: red; text-align: center;">Erreur de connexion</p>';
+            }
+        }
+
+        async function loadCoursesForSelect() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (!user.email) {
+                    console.error('Email utilisateur non trouvé');
+                    return;
+                }
+
+                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+                if (result.status === 'success') {
+                    const courses = result.data.courses || [];
+                    const options = courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
+
+                    ['quiz-course', 'assignment-course'].forEach(id => {
+                        const select = document.getElementById(id);
+                        if (select) select.innerHTML = '<option value="">Choisir un cours</option>' + options;
+                    });
+                }
+            } catch (e) {
+                console.error('Erreur selects:', e);
+            }
+        }
+
+        // Gestion des fichiers
+        function initFileUpload() {
+            const area = document.getElementById('file-upload-area');
+            const input = document.getElementById('course-files');
+
+            area.addEventListener('click', () => input.click());
+
+            input.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            area.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                area.classList.add('dragover');
+            });
+
+            area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+
+            area.addEventListener('drop', (e) => {
+                e.preventDefault();
+                area.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+        }
+
+        function handleFiles(files) {
+            const list = document.getElementById('file-list');
+
+            Array.from(files).forEach(file => {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Fichier trop grand: ' + file.name);
+                    return;
+                }
+
+                selectedFiles.push(file);
+
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                <i class="fas fa-file"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+                <span class="file-size">${formatSize(file.size)}</span>
+                <span class="remove-file" onclick="removeFile('${file.name}')">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+                list.appendChild(item);
+            });
+        }
+
+        function removeFile(name) {
+            selectedFiles = selectedFiles.filter(f => f.name !== name);
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                <i class="fas fa-file"></i>
+                <span class="file-name">${escapeHtml(file.name)}</span>
+                <span class="file-size">${formatSize(file.size)}</span>
+                <span class="remove-file" onclick="removeFile('${file.name}')">
+                    <i class="fas fa-times"></i>
+                </span>
+            `;
+                list.appendChild(item);
+            });
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // CRÉATION DU COURS - CORRECTION PRINCIPALE
+        document.getElementById('create-course-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+
+            if (!user.email || !token) {
+                alert('Veuillez vous reconnecter');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const btn = document.getElementById('submit-course');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                // CORRECTION : Envoi avec email pour authentification
+                const courseData = {
+                    teacher_email: user.email,
+                    title: document.getElementById('course-title').value,
+                    description: document.getElementById('course-description').value,
+                    category: document.getElementById('course-category').value,
+                    is_public: document.getElementById('course-visibility').value === 'public'
+                };
+
+                console.log('Envoi des données:', courseData);
+
+                const result = await apiRequest('teachers/create-course.php', {
+                    method: 'POST',
+                    body: courseData
+                });
+
+                console.log('Réponse:', result);
+
+                if (result.status === 'success') {
+                    // Upload des fichiers si présents
+                    if (selectedFiles.length > 0) {
+                        await uploadFiles(result.data.course_id, token);
+                    }
+
+                    alert('Cours créé avec succès !');
+                    document.getElementById('create-course-form').reset();
+                    selectedFiles = [];
+                    document.getElementById('file-list').innerHTML = '';
+                    showSection('courses');
+                } else {
+                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur complète:', error);
+                alert('Erreur serveur: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Créer le cours';
+            }
+        });
+
+        async function uploadFiles(courseId, token) {
+            for (const file of selectedFiles) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('course_id', courseId);
+                formData.append('title', file.name);
+
+                try {
+                    await fetch(`${API_BASE_URL}/teachers/upload-material.php`, {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                        body: formData
+                    });
+                } catch (e) {
+                    console.error('Erreur upload:', e);
+                }
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const token = localStorage.getItem('token');
+
+            if (!token || user.role !== 'teacher') {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            initFileUpload();
+            loadTeacherDashboard();
+        });
+        document.getElementById('create-quiz-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const courseId = document.getElementById('quiz-course').value;
+            const title = document.getElementById('quiz-title').value;
+
+            if (!courseId) {
+                alert('Veuillez sélectionner un cours');
+                return;
+            }
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                const result = await apiRequest('quizzes/create.php', {
+                    method: 'POST',
+                    body: {
+                        course_id: parseInt(courseId),
+                        title: title,
+                        teacher_email: user.email
+                    }
+                });
+
+                if (result.status === 'success') {
+                    alert('Quiz créé avec succès !');
+                    e.target.reset();
+                    // Recharger la liste des quiz si vous avez une fonction pour ça
+                } else {
+                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur création quiz:', error);
+                alert('Erreur lors de la création du quiz');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Créer le quiz';
+            }
+        });
+        document.getElementById('create-assignment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const courseId = document.getElementById('assignment-course').value;
+            const title = document.getElementById('assignment-title').value;
+
+            if (!courseId) {
+                alert('Veuillez sélectionner un cours');
+                return;
+            }
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                const result = await apiRequest('assignments/create.php', {
+                    method: 'POST',
+                    body: {
+                        course_id: parseInt(courseId),
+                        title: title,
+                        teacher_email: user.email
+                    }
+                });
+
+                if (result.status === 'success') {
+                    alert('Devoir créé avec succès !');
+                    e.target.reset();
+                } else {
+                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur création devoir:', error);
+                alert('Erreur lors de la création du devoir');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Créer le devoir';
+            }
+        });
+
+    </script>
 </body>
+
 </html>

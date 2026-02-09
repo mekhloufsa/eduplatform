@@ -3,6 +3,18 @@ function logout() {
     console.log('🚪 Tentative de déconnexion...');
     
     if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+        // Appel API de déconnexion (optionnel)
+        const token = localStorage.getItem('token');
+        if (token) {
+            // Tentative de déconnexion côté serveur
+            fetch('backend/api/auth/logout.php', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            }).catch(() => {}); // Ignorer les erreurs
+        }
+        
         // Supprimer toutes les données de session
         localStorage.clear();
         sessionStorage.clear();
@@ -19,8 +31,9 @@ function logout() {
     }
 }
 
-// Ajouter un gestionnaire d'événement pour le bouton de déconnexion
+// Vérifier l'état de connexion au chargement des pages protégées
 document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter un gestionnaire d'événement pour les boutons de déconnexion
     const logoutButtons = document.querySelectorAll('.logout, [onclick*="logout"]');
     
     logoutButtons.forEach(button => {
@@ -30,51 +43,98 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Vérifier l'état de connexion
+    // Vérifier l'état de connexion pour les pages protégées
     checkAuthStatus();
 });
 
 // Vérifier si l'utilisateur est connecté
 function checkAuthStatus() {
-    const userToken = localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
-    const userRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
     const currentPage = window.location.pathname.split('/').pop();
     
     // Pages qui nécessitent une authentification
     const protectedPages = ['student.html', 'teacher.html', 'admin.html'];
     
     if (protectedPages.includes(currentPage)) {
-        if (!userToken || !userRole) {
+        if (!token || !user) {
+            // Pas de token ou d'utilisateur - rediriger vers login
             alert('Session expirée. Veuillez vous reconnecter.');
             window.location.href = 'login.html';
             return;
         }
         
         // Vérifier si le rôle correspond à la page
-        const pageRole = currentPage.replace('.html', '');
-        if (userRole !== pageRole && !(pageRole === 'student' && userRole === 'teacher')) {
-            alert('Accès non autorisé. Redirection...');
-            window.location.href = 'index.html';
+        try {
+            const userData = JSON.parse(user);
+            const pageRole = currentPage.replace('.html', '');
+            
+            if (userData.role !== pageRole) {
+                // Rediriger vers la bonne page selon le rôle
+                if (userData.role === 'student') {
+                    window.location.href = 'student.html';
+                } else if (userData.role === 'teacher') {
+                    window.location.href = 'teacher.html';
+                } else if (userData.role === 'admin') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+        } catch(e) {
+            console.error('Erreur parsing user data:', e);
+            localStorage.clear();
+            window.location.href = 'login.html';
         }
     }
 }
 
 // Fonction pour obtenir le token d'authentification
 function getAuthToken() {
-    return localStorage.getItem('userToken') || sessionStorage.getItem('userToken');
+    return localStorage.getItem('token');
 }
 
 // Fonction pour obtenir le rôle de l'utilisateur
 function getUserRole() {
-    return localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
+    const user = localStorage.getItem('user');
+    if (user) {
+        try {
+            return JSON.parse(user).role;
+        } catch(e) {
+            return null;
+        }
+    }
+    return null;
 }
 
 // Fonction pour obtenir le nom de l'utilisateur
 function getUserName() {
-    return localStorage.getItem('userName') || sessionStorage.getItem('userName');
+    const user = localStorage.getItem('user');
+    if (user) {
+        try {
+            const userData = JSON.parse(user);
+            return userData.firstName + ' ' + userData.lastName;
+        } catch(e) {
+            return null;
+        }
+    }
+    return null;
 }
 
 // Fonction pour obtenir l'ID de l'utilisateur
 function getUserId() {
-    return localStorage.getItem('userId') || sessionStorage.getItem('userId');
+    const user = localStorage.getItem('user');
+    if (user) {
+        try {
+            return JSON.parse(user).id;
+        } catch(e) {
+            return null;
+        }
+    }
+    return null;
+}
+
+// Fonction utilitaire pour vérifier si l'utilisateur est authentifié
+function isAuthenticated() {
+    return !!localStorage.getItem('token');
 }

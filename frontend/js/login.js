@@ -2,6 +2,45 @@
 // Déclaration unique de l'API_BASE_URL
 const API_BASE_URL = window.location.origin + '/eduplatform/backend';
 
+// Fonction pour afficher les notifications (définie ici pour éviter les dépendances)
+function showNotification(message, type = 'success') {
+    // Supprimer les notifications existantes
+    $('.notification').remove();
+    
+    const notification = $('<div>')
+        .addClass(`notification ${type}`)
+        .text(message)
+        .css({
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '15px 25px',
+            borderRadius: '8px',
+            color: 'white',
+            fontWeight: '500',
+            zIndex: '9999',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            animation: 'slideInRight 0.3s ease-out'
+        });
+
+    // Couleurs selon le type
+    const colors = {
+        success: '#28a745',
+        error: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+    notification.css('background', colors[type] || colors.success);
+
+    $('body').append(notification);
+
+    setTimeout(() => {
+        notification.fadeOut(300, function() {
+            $(this).remove();
+        });
+    }, 3000);
+}
+
 $(document).ready(function() {
     // Toggle mot de passe
     $('#togglePassword').on('click', function() {

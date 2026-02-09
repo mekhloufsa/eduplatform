@@ -2,321 +2,265 @@
 // Déclaration unique de l'API_BASE_URL
 const API_BASE_URL = window.location.origin + '/eduplatform/backend';
 
-// VARIABLES GLOBALES - Initialisation correcte
-let currentStep = 1;
-const totalSteps = 3;
+console.log('Register.js chargé - Version corrigée');
 
 $(document).ready(function() {
-    // Gestion du changement de rôle
-    $('input[name="role"]').on('change', function() {
+    console.log('Document ready - Initialisation du formulaire d\'inscription');
+    
+    // Vérifier que jQuery fonctionne
+    if (typeof $ === 'undefined') {
+        console.error('jQuery non chargé !');
+        alert('Erreur: jQuery n\'est pas chargé');
+        return;
+    }
+    
+    // Vérifier les éléments existants
+    console.log('studentFields existe:', $('#studentFields').length > 0);
+    console.log('teacherFields existe:', $('#teacherFields').length > 0);
+    console.log('Radio buttons existent:', $('input[name="role"]').length > 0);
+    
+    // Initialiser l'affichage - ÉTUDIANT par défaut
+    $('#studentFields').css('display', 'block');
+    $('#teacherFields').css('display', 'none');
+    $('#studentCard, #year').prop('required', true);
+    $('#specialty').prop('required', false);
+    
+    // Gestion du changement de rôle - VERSION CORRIGÉE
+    $(document).on('change', 'input[name="role"]', function() {
         const role = $(this).val();
+        console.log('=== CHANGEMENT DE RÔLE ===');
+        console.log('Nouveau rôle:', role);
         
         if (role === 'student') {
-            $('#studentFields').show();
-            $('#teacherFields').hide();
-            // Rendre les champs requis
+            console.log('Affichage champs ÉTUDIANT');
+            $('#studentFields').css('display', 'block');
+            $('#teacherFields').css('display', 'none');
+            
+            // Gérer les champs requis
             $('#studentCard, #year').prop('required', true);
-            $('#specialty').prop('required', false);
-        } else {
-            $('#studentFields').hide();
-            $('#teacherFields').show();
-            // Rendre les champs requis
+            $('#specialty, #phone').prop('required', false);
+            
+            // Vider les champs enseignant pour éviter confusion
+            $('#specialty').val('');
+            $('#phone').val('');
+            
+        } else if (role === 'teacher') {
+            console.log('Affichage champs ENSEIGNANT');
+            $('#studentFields').css('display', 'none');
+            $('#teacherFields').css('display', 'block');
+            
+            // Gérer les champs requis
             $('#studentCard, #year').prop('required', false);
             $('#specialty').prop('required', true);
+            $('#phone').prop('required', false);
+            
+            // Vider les champs étudiant pour éviter confusion
+            $('#studentCard').val('');
+            $('#year').val('');
         }
         
-        updateSummary();
+        // Animation pour rendre le changement visible
+        $('.role-fields:visible').hide().fadeIn(300);
     });
     
-    // Validation en temps réel du mot de passe
+    // Validation du mot de passe
     $('#password').on('input', function() {
-        checkPasswordStrength($(this).val());
+        const val = $(this).val();
+        const strength = calculatePasswordStrength(val);
+        updatePasswordIndicator(strength);
     });
     
-    // Validation de la confirmation du mot de passe
+    // Validation confirmation mot de passe
     $('#confirmPassword').on('input', function() {
-        validatePasswordMatch();
-    });
-    
-    // Mise à jour du résumé quand les champs changent
-    $('#registerForm input, #registerForm select').on('change input', function() {
-        updateSummary();
-    });
-    
-    // Navigation entre les étapes
-    $('.btn-next').on('click', function(e) {
-        e.preventDefault();
-        if (validateCurrentStep()) {
-            nextStep();
+        const pass = $('#password').val();
+        const confirm = $(this).val();
+        
+        if (confirm && pass !== confirm) {
+            $(this).css('border-color', '#dc3545');
+        } else if (confirm) {
+            $(this).css('border-color', '#28a745');
+        } else {
+            $(this).css('border-color', '#e0e0e0');
         }
-    });
-    
-    $('.btn-prev').on('click', function(e) {
-        e.preventDefault();
-        prevStep();
     });
     
     // Soumission du formulaire
     $('#registerForm').on('submit', function(e) {
         e.preventDefault();
+        console.log('Soumission du formulaire...');
         
-        if (!validateCurrentStep()) {
+        // Récupérer les valeurs de base
+        const email = $('#email').val().trim();
+        const password = $('#password').val();
+        const confirmPassword = $('#confirmPassword').val();
+        const firstName = $('#firstName').val().trim();
+        const lastName = $('#lastName').val().trim();
+        const role = $('input[name="role"]:checked').val();
+        
+        console.log('Rôle sélectionné:', role);
+        
+        // Validation de base
+        if (!email || !password || !firstName || !lastName) {
+            showError('Veuillez remplir tous les champs obligatoires');
             return;
         }
         
-        // Vérifier que les mots de passe correspondent
-        if ($('#password').val() !== $('#confirmPassword').val()) {
+        if (password !== confirmPassword) {
             showError('Les mots de passe ne correspondent pas');
             return;
         }
         
-        // Vérifier les conditions
-        if (!$('#terms').is(':checked')) {
-            showError('Vous devez accepter les conditions d\'utilisation');
+        if (password.length < 6) {
+            showError('Le mot de passe doit contenir au moins 6 caractères');
             return;
         }
         
-        submitForm();
+        // Validation spécifique au rôle
+        let roleData = {};
+        
+        if (role === 'student') {
+            const studentCard = $('#studentCard').val().trim();
+            const year = $('#year').val();
+            
+            if (!studentCard) {
+                showError('Veuillez entrer votre numéro de carte étudiant');
+                $('#studentCard').focus();
+                return;
+            }
+            if (!year) {
+                showError('Veuillez sélectionner votre année d\'études');
+                $('#year').focus();
+                return;
+            }
+            
+            roleData = { studentCard, year };
+            
+        } else if (role === 'teacher') {
+            const specialty = $('#specialty').val().trim();
+            const phone = $('#phone').val().trim();
+            
+            if (!specialty) {
+                showError('Veuillez entrer votre spécialité');
+                $('#specialty').focus();
+                return;
+            }
+            
+            roleData = { specialty, phone };
+        }
+        
+        // Désactiver le bouton
+        const submitBtn = $('#submitBtn');
+        submitBtn.prop('disabled', true).text('Création en cours...');
+        
+        // Préparer les données
+        const data = {
+            email: email,
+            password: password,
+            firstName: firstName,
+            lastName: lastName,
+            role: role,
+            ...roleData
+        };
+        
+        console.log('Données envoyées:', data);
+        
+        // Appel API
+        $.ajax({
+            url: `${API_BASE_URL}/api/auth/register.php`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                console.log('Réponse serveur:', response);
+                
+                if (response.status === 'success') {
+                    showSuccess('Compte créé avec succès ! Redirection...');
+                    
+                    // Stocker les infos
+                    localStorage.setItem('token', response.data.token);
+                    localStorage.setItem('user', JSON.stringify(response.data.user));
+                    
+                    // Redirection
+                    setTimeout(() => {
+                        const redirectUrl = role === 'student' ? 'student.html' : 'teacher.html';
+                        window.location.href = redirectUrl;
+                    }, 1500);
+                } else {
+                    showError(response.message || 'Erreur lors de l\'inscription');
+                    submitBtn.prop('disabled', false).text('Créer mon compte');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Erreur AJAX:', { xhr, status, error });
+                let message = 'Erreur de connexion au serveur';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    message = response.message || message;
+                } catch(e) {}
+                
+                showError(message);
+                submitBtn.prop('disabled', false).text('Créer mon compte');
+            }
+        });
     });
-    
-    // Initialiser l'affichage
-    updateStepDisplay();
-    updateSummary();
 });
 
-// FONCTIONS DE NAVIGATION
-
-function nextStep() {
-    if (currentStep < totalSteps) {
-        currentStep++;
-        updateStepDisplay();
-    }
-}
-
-function prevStep() {
-    if (currentStep > 1) {
-        currentStep--;
-        updateStepDisplay();
-    }
-}
-
-function updateStepDisplay() {
-    // Cacher toutes les étapes
-    $('.form-step').removeClass('active');
-    
-    // Afficher l'étape courante
-    $(`#step-${currentStep}`).addClass('active');
-    
-    // Mettre à jour l'indicateur de progression
-    $('.step').removeClass('active completed');
-    for (let i = 1; i <= totalSteps; i++) {
-        if (i < currentStep) {
-            $(`.step:nth-child(${i * 2 - 1})`).addClass('completed');
-        } else if (i === currentStep) {
-            $(`.step:nth-child(${i * 2 - 1})`).addClass('active');
-        }
-    }
-    
-    // Gérer les boutons
-    $('.btn-prev').toggle(currentStep > 1);
-    $('.btn-next').toggle(currentStep < totalSteps);
-    $('.btn-submit').toggle(currentStep === totalSteps);
-}
-
-function validateCurrentStep() {
-    let isValid = true;
-    const step = $(`#step-${currentStep}`);
-    
-    // Vérifier tous les champs requis de l'étape courante
-    step.find('input[required], select[required]').each(function() {
-        if (!$(this).val().trim()) {
-            isValid = false;
-            $(this).addClass('error');
-            
-            // Animation d'erreur
-            $(this).shake();
-        } else {
-            $(this).removeClass('error');
-        }
-    });
-    
-    // Validation spécifique selon l'étape
-    if (currentStep === 1) {
-        // Validation email
-        const email = $('#email').val();
-        if (email && !isValidEmail(email)) {
-            isValid = false;
-            showError('Veuillez entrer un email valide');
-        }
-    }
-    
-    if (currentStep === 2) {
-        // Validation mot de passe
-        const password = $('#password').val();
-        if (password && password.length < 6) {
-            isValid = false;
-            showError('Le mot de passe doit contenir au moins 6 caractères');
-        }
-        
-        // Validation correspondance
-        if ($('#password').val() !== $('#confirmPassword').val()) {
-            isValid = false;
-            showError('Les mots de passe ne correspondent pas');
-        }
-    }
-    
-    if (!isValid) {
-        showError('Veuillez remplir tous les champs obligatoires');
-    }
-    
-    return isValid;
-}
-
-// FONCTIONS UTILITAIRES
-
-function updateSummary() {
-    const role = $('input[name="role"]:checked').val();
-    const roleText = role === 'student' ? 'Étudiant' : 'Enseignant';
-    
-    $('#summary-role').text(roleText);
-    $('#summary-name').text(`${$('#firstName').val()} ${$('#lastName').val()}`);
-    $('#summary-email').text($('#email').val());
-    
-    if (role === 'student') {
-        $('#summary-extra').text(`Carte: ${$('#studentCard').val()} | Année: ${$('#year').val()}`);
-    } else {
-        $('#summary-extra').text(`Spécialité: ${$('#specialty').val()}`);
-    }
-}
-
-function checkPasswordStrength(password) {
-    const strengthBar = $('.strength-bar');
-    const strengthText = $('.strength-text');
-    
-    // Réinitialiser
-    strengthBar.removeClass('weak medium strong');
-    strengthText.removeClass('weak medium strong').text('');
-    
-    if (password.length === 0) return;
+// Fonction pour calculer la force du mot de passe
+function calculatePasswordStrength(password) {
+    if (!password) return 0;
     
     let strength = 0;
-    
-    // Critères
     if (password.length >= 8) strength++;
     if (password.match(/[a-z]/) && password.match(/[A-Z]/)) strength++;
     if (password.match(/[0-9]/)) strength++;
     if (password.match(/[^a-zA-Z0-9]/)) strength++;
     
-    // Appliquer la classe
-    if (strength <= 1) {
-        strengthBar.addClass('weak');
-        strengthText.addClass('weak').text('Faible');
-    } else if (strength === 2 || strength === 3) {
-        strengthBar.addClass('medium');
-        strengthText.addClass('medium').text('Moyen');
-    } else {
-        strengthBar.addClass('strong');
-        strengthText.addClass('strong').text('Fort');
-    }
+    return strength;
 }
 
-function validatePasswordMatch() {
-    const password = $('#password').val();
-    const confirm = $('#confirmPassword').val();
+// Fonction pour mettre à jour l'indicateur de force
+function updatePasswordIndicator(strength) {
+    const passwordInput = $('#password');
     
-    if (confirm && password !== confirm) {
-        $('#confirmPassword').addClass('error');
-        return false;
+    // Retirer les classes précédentes
+    passwordInput.removeClass('strength-weak strength-medium strength-strong');
+    
+    if (strength === 0) {
+        passwordInput.css('border-color', '#e0e0e0');
+    } else if (strength <= 2) {
+        passwordInput.css('border-color', '#dc3545'); // Rouge
+    } else if (strength === 3) {
+        passwordInput.css('border-color', '#ffc107'); // Jaune
     } else {
-        $('#confirmPassword').removeClass('error');
-        return true;
+        passwordInput.css('border-color', '#28a745'); // Vert
     }
 }
 
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// Plugin jQuery pour l'animation shake
-$.fn.shake = function() {
-    this.each(function() {
-        $(this).css('position', 'relative');
-        for (let i = 0; i < 3; i++) {
-            $(this).animate({ left: -5 }, 50)
-                   .animate({ left: 5 }, 50)
-                   .animate({ left: 0 }, 50);
-        }
-    });
-    return this;
-};
-
+// Fonction pour afficher les erreurs
 function showError(message) {
+    console.log('Erreur:', message);
     const errorDiv = $('#errorMessage');
-    errorDiv.text(message).show();
-    setTimeout(() => errorDiv.hide(), 5000);
-}
-
-function showSuccess(message) {
     const successDiv = $('#successMessage');
-    successDiv.text(message).show();
-    setTimeout(() => successDiv.hide(), 5000);
+    
+    errorDiv.text(message).show();
+    successDiv.hide();
+    
+    // Scroll vers le message d'erreur
+    $('html, body').animate({
+        scrollTop: errorDiv.offset().top - 100
+    }, 300);
+    
+    setTimeout(() => errorDiv.fadeOut(), 5000);
 }
 
-function submitForm() {
-    const submitBtn = $('#submitBtn');
-    submitBtn.prop('disabled', true).text('Création en cours...');
+// Fonction pour afficher les succès
+function showSuccess(message) {
+    console.log('Succès:', message);
+    const successDiv = $('#successMessage');
+    const errorDiv = $('#errorMessage');
     
-    const role = $('input[name="role"]:checked').val();
+    successDiv.text(message).show();
+    errorDiv.hide();
     
-    const data = {
-        email: $('#email').val().trim(),
-        password: $('#password').val(),
-        firstName: $('#firstName').val().trim(),
-        lastName: $('#lastName').val().trim(),
-        role: role
-    };
-    
-    // Ajouter les champs spécifiques au rôle
-    if (role === 'student') {
-        data.studentCard = $('#studentCard').val().trim();
-        data.year = $('#year').val();
-    } else {
-        data.specialty = $('#specialty').val().trim();
-        data.phone = $('#phone').val().trim();
-    }
-    
-    $.ajax({
-        url: `${API_BASE_URL}/api/auth/register.php`,
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(data),
-        success: function(response) {
-            if (response.status === 'success') {
-                showSuccess('Compte créé avec succès ! Redirection...');
-                
-                // Stocker les infos
-                localStorage.setItem('token', response.data.token);
-                localStorage.setItem('user', JSON.stringify(response.data.user));
-                
-                // Redirection
-                setTimeout(() => {
-                    const redirectUrl = role === 'student' ? 'student.html' : 'teacher.html';
-                    window.location.href = redirectUrl;
-                }, 1500);
-            } else {
-                showError(response.message || 'Erreur lors de l\'inscription');
-                submitBtn.prop('disabled', false).text('Créer mon compte');
-            }
-        },
-        error: function(xhr) {
-            let message = 'Erreur serveur';
-            try {
-                const response = JSON.parse(xhr.responseText);
-                message = response.message || message;
-            } catch(e) {}
-            
-            showError(message);
-            submitBtn.prop('disabled', false).text('Créer mon compte');
-        }
-    });
+    setTimeout(() => successDiv.fadeOut(), 5000);
 }
