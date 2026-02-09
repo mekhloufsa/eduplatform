@@ -18,7 +18,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Récupérer les données JSON
 $json = file_get_contents('php://input');
 $data = json_decode($json, true);
 
@@ -28,7 +27,6 @@ if (!$data) {
     exit();
 }
 
-// Vérifier l'authentification par email
 if (empty($data['teacher_email'])) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Email enseignant requis']);
@@ -45,7 +43,6 @@ try {
     $db = new Database();
     $conn = $db->getConnection();
     
-    // Vérifier que l'enseignant existe et a le bon rôle
     $teacher_email = sanitize($data['teacher_email']);
     $user_sql = "SELECT u.id, u.role, t.id as teacher_id 
                  FROM users u 
@@ -62,9 +59,8 @@ try {
     }
     
     $user = $user_stmt->fetch();
-    
-    // Vérifier que le cours appartient à cet enseignant
     $course_id = intval($data['course_id']);
+    
     $check_sql = "SELECT id FROM courses WHERE id = :course_id AND teacher_id = :teacher_id";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bindParam(':course_id', $course_id);
@@ -79,20 +75,15 @@ try {
     
     $title = sanitize($data['title']);
     $description = isset($data['description']) ? sanitize($data['description']) : null;
-    $quiz_type = isset($data['quiz_type']) ? sanitize($data['quiz_type']) : 'practice';
-    $time_limit = isset($data['time_limit']) ? intval($data['time_limit']) : 0;
-    $passing_score = isset($data['passing_score']) ? intval($data['passing_score']) : 60;
     
-    $sql = "INSERT INTO quizzes (course_id, title, description, quiz_type, time_limit, passing_score) 
-            VALUES (:course_id, :title, :description, :quiz_type, :time_limit, :passing_score)";
+    // Valeurs fixes - plus de time_limit ni passing_score
+    $sql = "INSERT INTO quizzes (course_id, title, description, quiz_type, time_limit, passing_score, is_published) 
+            VALUES (:course_id, :title, :description, 'practice', 0, 60, 0)";
     
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':course_id', $course_id);
     $stmt->bindParam(':title', $title);
     $stmt->bindParam(':description', $description);
-    $stmt->bindParam(':quiz_type', $quiz_type);
-    $stmt->bindParam(':time_limit', $time_limit);
-    $stmt->bindParam(':passing_score', $passing_score);
     $stmt->execute();
     
     $quiz_id = $conn->lastInsertId();

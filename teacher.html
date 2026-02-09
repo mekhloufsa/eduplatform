@@ -65,7 +65,6 @@
             display: block;
         }
 
-        /* Upload de fichiers */
         .file-upload-area {
             border: 3px dashed #5f6cff;
             border-radius: 12px;
@@ -84,7 +83,6 @@
 
         .file-upload-area.dragover {
             background: #e0e2ff;
-            border-color: #4a58ff;
             transform: scale(1.02);
         }
 
@@ -92,43 +90,6 @@
             font-size: 48px;
             color: #5f6cff;
             margin-bottom: 15px;
-        }
-
-        .file-list {
-            margin-top: 20px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px;
-            background: white;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .file-item i {
-            color: #5f6cff;
-            margin-right: 10px;
-        }
-
-        .file-item .file-name {
-            flex: 1;
-            color: #333;
-        }
-
-        .file-item .file-size {
-            color: #666;
-            font-size: 0.9rem;
-            margin-right: 15px;
-        }
-
-        .file-item .remove-file {
-            color: #dc3545;
-            cursor: pointer;
-            padding: 5px;
         }
 
         .stats-grid {
@@ -209,7 +170,9 @@
             gap: 15px;
         }
 
-        .course-item {
+        .course-item,
+        .quiz-item,
+        .assignment-item {
             background: white;
             padding: 20px;
             border-radius: 12px;
@@ -217,26 +180,168 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .course-item h3 {
+        .course-item h3,
+        .quiz-item h3,
+        .assignment-item h3 {
             color: #333;
             margin-bottom: 10px;
         }
 
-        .course-item p {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .course-meta {
+        .course-meta,
+        .quiz-meta,
+        .assignment-meta {
             display: flex;
             gap: 20px;
             color: #888;
             font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        /* Styles pour le constructeur de quiz */
+        .question-builder {
+            background: #f8f9ff;
+            border: 2px solid #e0e2ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .question-number {
+            background: #5f6cff;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .option-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .option-row input[type="text"] {
+            flex: 1;
+        }
+
+        .option-row input[type="radio"],
+        .option-row input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .btn-add-option,
+        .btn-add-question {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-remove-question {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .questions-list {
+            margin-top: 30px;
+        }
+
+        .saved-question {
+            background: white;
+            border-left: 4px solid #5f6cff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .saved-question h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .saved-options {
+            margin-left: 20px;
+        }
+
+        .saved-options li {
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .correct-answer {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .wrong-answer {
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
         }
 
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
+            }
+
+            .course-meta,
+            .quiz-meta,
+            .assignment-meta {
+                flex-direction: column;
+                gap: 5px;
             }
         }
     </style>
@@ -251,7 +356,7 @@
             <a href="#" id="nav-courses" onclick="showSection('courses')">Mes Cours</a>
             <a href="#" id="nav-create" onclick="showSection('create')">Créer un Cours</a>
             <a href="#" id="nav-quizzes" onclick="showSection('quizzes')">Quiz & Évaluations</a>
-            <a href="#" id="nav-forum" onclick="showSection('forum')">Forum</a>
+            <a href="#" id="nav-assignments" onclick="showSection('assignments')">Devoirs</a>
         </nav>
         <button class="logout" onclick="logout()">Déconnexion</button>
     </header>
@@ -276,8 +381,8 @@
                     <div class="stat-label">Quiz créés</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="pending-assignments">0</div>
-                    <div class="stat-label">Devoirs en attente</div>
+                    <div class="stat-value" id="total-assignments">0</div>
+                    <div class="stat-label">Devoirs créés</div>
                 </div>
             </div>
 
@@ -292,14 +397,9 @@
         <!-- Section Mes Cours -->
         <div id="courses-section" class="section">
             <h1>Mes Cours</h1>
-
             <div id="courses-list">
                 <p style="color: #666; text-align: center; padding: 40px;">Chargement des cours...</p>
             </div>
-
-            <button class="btn-create" onclick="showSection('create')" style="margin-top: 20px;">
-                <i class="fas fa-plus"></i> Créer un nouveau cours
-            </button>
         </div>
 
         <!-- Section Création de Cours -->
@@ -309,12 +409,10 @@
             <form id="create-course-form">
                 <div class="card">
                     <h3>Informations du cours</h3>
-
                     <div class="form-group">
                         <label for="course-title">Titre du cours *</label>
                         <input type="text" id="course-title" placeholder="Ex: Introduction à JavaScript" required>
                     </div>
-
                     <div class="form-group">
                         <label for="course-category">Catégorie *</label>
                         <select id="course-category" required>
@@ -326,7 +424,6 @@
                             <option value="Développement Mobile">Développement Mobile</option>
                         </select>
                     </div>
-
                     <div class="form-group">
                         <label for="course-description">Description *</label>
                         <textarea id="course-description" rows="4" placeholder="Décrivez votre cours..."
@@ -334,33 +431,16 @@
                     </div>
                 </div>
 
-                <!-- Upload de fichiers -->
                 <div class="card" style="margin-top: 20px;">
                     <h3>Supports de cours (optionnel)</h3>
-                    <p style="color: #666; margin-bottom: 15px;">Ajoutez des PDF, vidéos, images ou autres fichiers</p>
-
                     <div class="file-upload-area" id="file-upload-area">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <p><strong>Cliquez pour sélectionner des fichiers</strong></p>
                         <p>ou glissez-déposez ici</p>
                         <p style="font-size: 0.85rem; color: #999;">PDF, DOC, PPT, MP4, MP3, JPG, PNG (max 10MB)</p>
-                        <input type="file" id="course-files" multiple
-                            accept=".pdf,.doc,.docx,.ppt,.pptx,.mp4,.mp3,.jpg,.jpeg,.png,.gif,.zip,.rar"
-                            style="display: none;">
+                        <input type="file" id="course-files" multiple style="display: none;">
                     </div>
-
                     <div class="file-list" id="file-list"></div>
-                </div>
-
-                <div class="card" style="margin-top: 20px;">
-                    <h3>Paramètres</h3>
-                    <div class="form-group">
-                        <label for="course-visibility">Visibilité du cours</label>
-                        <select id="course-visibility">
-                            <option value="public">Public (visible à tous)</option>
-                            <option value="private">Privé (uniquement avec lien)</option>
-                        </select>
-                    </div>
                 </div>
 
                 <div style="margin-top: 30px;">
@@ -376,12 +456,13 @@
             <h1>Quiz & Évaluations</h1>
 
             <div class="tabs">
-                <button class="tab active" onclick="switchTab(this, 'create-quiz')">Créer un Quiz</button>
-                <button class="tab" onclick="switchTab(this, 'manage-quizzes')">Mes Quiz</button>
-                <button class="tab" onclick="switchTab(this, 'create-assignment')">Créer un Devoir</button>
+                <button class="tab active" onclick="switchTab(this, 'create-quiz-tab')">Créer un Quiz</button>
+                <button class="tab" onclick="switchTab(this, 'manage-quizzes-tab')">Mes Quiz</button>
+                <button class="tab" onclick="switchTab(this, 'build-quiz-tab')">Construire Questions</button>
             </div>
 
-            <div id="create-quiz" class="tab-content active">
+            <!-- Créer un Quiz -->
+            <div id="create-quiz-tab" class="tab-content active">
                 <div class="card">
                     <form id="create-quiz-form">
                         <div class="form-group">
@@ -394,12 +475,17 @@
                             <label for="quiz-title">Titre du quiz *</label>
                             <input type="text" id="quiz-title" placeholder="Ex: Quiz - Chapitre 1" required>
                         </div>
+                        <div class="form-group">
+                            <label for="quiz-description">Description</label>
+                            <textarea id="quiz-description" rows="2" placeholder="Description du quiz..."></textarea>
+                        </div>
                         <button type="submit" class="btn-create">Créer le quiz</button>
                     </form>
                 </div>
             </div>
 
-            <div id="manage-quizzes" class="tab-content">
+            <!-- Mes Quiz -->
+            <div id="manage-quizzes-tab" class="tab-content">
                 <div class="card">
                     <h3>Vos quiz</h3>
                     <div id="quizzes-list">
@@ -408,9 +494,92 @@
                 </div>
             </div>
 
-            <div id="create-assignment" class="tab-content">
+            <!-- Construire Questions -->
+            <div id="build-quiz-tab" class="tab-content">
                 <div class="card">
-                    <form id="create-assignment-form">
+                    <h3>Construire les questions d'un quiz</h3>
+                    <div class="form-group">
+                        <label for="build-quiz-select">Sélectionner un quiz *</label>
+                        <select id="build-quiz-select" onchange="loadQuizQuestions()">
+                            <option value="">Choisir un quiz</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Constructeur de question -->
+                <div id="question-builder-container" style="display: none;">
+                    <div class="question-builder">
+                        <div class="question-header">
+                            <span class="question-number">Nouvelle Question</span>
+                            <button type="button" class="btn-remove-question"
+                                onclick="resetQuestionBuilder()">Réinitialiser</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Question *</label>
+                            <input type="text" id="question-text" placeholder="Entrez votre question...">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Type de question</label>
+                            <select id="question-type" onchange="updateOptionInputType()">
+                                <option value="multiple_choice">Choix multiple (une réponse)</option>
+                                <option value="multiple_answer">Choix multiple (plusieurs réponses)</option>
+                                <option value="true_false">Vrai/Faux</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Points</label>
+                            <input type="number" id="question-points" value="1" min="1">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Réponses possibles *</label>
+                            <div id="options-container">
+                                <!-- Les options seront ajoutées ici dynamiquement -->
+                            </div>
+                            <button type="button" class="btn-add-option" onclick="addOption()">
+                                <i class="fas fa-plus"></i> Ajouter une option
+                            </button>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Explication (optionnelle)</label>
+                            <textarea id="question-explanation" rows="2"
+                                placeholder="Explication de la réponse correcte..."></textarea>
+                        </div>
+
+                        <button type="button" class="btn-create" onclick="saveQuestion()"
+                            style="width: 100%; margin-top: 15px;">
+                            <i class="fas fa-save"></i> Ajouter cette question
+                        </button>
+                    </div>
+
+                    <!-- Liste des questions existantes -->
+                    <div class="card questions-list">
+                        <h3>Questions du quiz</h3>
+                        <div id="saved-questions-list">
+                            <p style="color: #666; text-align: center;">Aucune question ajoutée</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Devoirs -->
+        <div id="assignments-section" class="section">
+            <h1>Gestion des Devoirs</h1>
+
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab(this, 'create-assignment-tab')">Créer un Devoir</button>
+                <button class="tab" onclick="switchTab(this, 'manage-assignments-tab')">Mes Devoirs</button>
+            </div>
+
+            <!-- Créer un Devoir -->
+            <div id="create-assignment-tab" class="tab-content active">
+                <div class="card">
+                    <form id="create-assignment-form" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="assignment-course">Cours concerné *</label>
                             <select id="assignment-course" required>
@@ -419,58 +588,127 @@
                         </div>
                         <div class="form-group">
                             <label for="assignment-title">Titre du devoir *</label>
-                            <input type="text" id="assignment-title" placeholder="Ex: Projet final" required>
+                            <input type="text" id="assignment-title" placeholder="Ex: Projet final - Application Web"
+                                required>
                         </div>
-                        <button type="submit" class="btn-create">Créer le devoir</button>
+                        <div class="form-group">
+                            <label for="assignment-description">Description *</label>
+                            <textarea id="assignment-description" rows="4"
+                                placeholder="Décrivez le devoir, les consignes, les critères d'évaluation..."
+                                required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="assignment-due-date">Date de remise *</label>
+                                <input type="datetime-local" id="assignment-due-date" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="assignment-points">Points maximum</label>
+                                <input type="number" id="assignment-points" value="100" min="1">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="assignment-late" style="width: auto; margin-right: 8px;">
+                                Autoriser les remises en retard
+                            </label>
+                        </div>
+
+                        <!-- Upload de fichier pour le devoir -->
+                        <div class="form-group">
+                            <label>Fichier du devoir (sujet, modèle, etc.)</label>
+                            <div class="file-upload-area" id="assignment-file-area" style="padding: 20px;">
+                                <i class="fas fa-file-upload"></i>
+                                <p><strong>Cliquez pour sélectionner un fichier</strong></p>
+                                <p style="font-size: 0.85rem; color: #999;">PDF, DOC, ZIP (max 10MB)</p>
+                                <input type="file" id="assignment-file" name="file" accept=".pdf,.doc,.docx,.zip,.rar"
+                                    style="display: none;">
+                            </div>
+                            <div id="assignment-file-preview"></div>
+                        </div>
+
+                        <button type="submit" class="btn-create" id="submit-assignment">
+                            <i class="fas fa-save"></i> Créer le devoir
+                        </button>
                     </form>
                 </div>
             </div>
-        </div>
 
-        <!-- Section Forum -->
-        <div id="forum-section" class="section">
-            <h1>Forum</h1>
-            <p style="color: #666; text-align: center; padding: 40px;">Fonctionnalité en développement</p>
+            <!-- Mes Devoirs -->
+            <div id="manage-assignments-tab" class="tab-content">
+                <div class="card">
+                    <h3>Vos devoirs</h3>
+                    <div id="assignments-list">
+                        <p style="color: #666; text-align: center;">Aucun devoir créé</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        // CORRECTION : Définition locale de l'API_BASE_URL
         const API_BASE_URL = window.location.origin + '/eduplatform/backend/api';
         let selectedFiles = [];
+        let currentOptions = [];
+        let optionCounter = 0;
 
-        // Fonction utilitaire pour les requêtes API
+        // ============ NAVIGATION ============
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(sectionName + '-section').classList.add('active');
+            document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
+            document.getElementById('nav-' + sectionName).classList.add('active');
+
+            if (sectionName === 'courses') loadTeacherCourses();
+            else if (sectionName === 'dashboard') loadTeacherDashboard();
+            else if (sectionName === 'quizzes') {
+                loadCoursesForSelect();
+                loadTeacherQuizzes();
+            }
+            else if (sectionName === 'assignments') {
+                loadCoursesForSelect();
+                loadTeacherAssignments();
+            }
+        }
+
+        function switchTab(tab, contentId) {
+            tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            const section = tab.closest('.section');
+            section.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(contentId).classList.add('active');
+        }
+
+        // ============ API REQUEST ============
         async function apiRequest(endpoint, options = {}) {
             const url = `${API_BASE_URL}/${endpoint}`;
             const token = localStorage.getItem('token');
 
             const defaultOptions = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
+                headers: {}
             };
 
             if (token) {
                 defaultOptions.headers['Authorization'] = 'Bearer ' + token;
             }
 
-            const finalOptions = {
-                ...defaultOptions,
-                ...options,
-                headers: {
-                    ...defaultOptions.headers,
-                    ...options.headers
-                }
-            };
+            const finalOptions = { ...defaultOptions, ...options };
 
-            if (finalOptions.body && typeof finalOptions.body === 'object' && !(finalOptions.body instanceof FormData)) {
-                finalOptions.body = JSON.stringify(finalOptions.body);
+            // Fusionner les headers
+            if (options.headers) {
+                finalOptions.headers = { ...defaultOptions.headers, ...options.headers };
+            }
+
+            // Ne pas stringify si c'est du FormData
+            if (finalOptions.body && !(finalOptions.body instanceof FormData)) {
+                finalOptions.headers['Content-Type'] = 'application/json';
+                if (typeof finalOptions.body === 'object') {
+                    finalOptions.body = JSON.stringify(finalOptions.body);
+                }
             }
 
             const response = await fetch(url, finalOptions);
 
-            // Vérifier si la réponse est du JSON
             const contentType = response.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) {
                 return await response.json();
@@ -481,102 +719,69 @@
             }
         }
 
-        function showSection(sectionName) {
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.getElementById(sectionName + '-section').classList.add('active');
-
-            document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-            document.getElementById('nav-' + sectionName).classList.add('active');
-
-            if (sectionName === 'courses') loadTeacherCourses();
-            else if (sectionName === 'dashboard') loadTeacherDashboard();
-            else if (sectionName === 'quizzes') loadCoursesForSelect();
-        }
-
-        function switchTab(tab, contentId) {
-            tab.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const section = tab.closest('.section');
-            section.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(contentId).classList.add('active');
-        }
-
+        // ============ DASHBOARD ============
         async function loadTeacherDashboard() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (!user.email) {
-                    console.error('Email utilisateur non trouvé');
-                    return;
-                }
+                if (!user.email) return;
 
                 const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
-
                 if (result.status === 'success') {
                     const stats = result.data.stats || {};
                     document.getElementById('total-courses').textContent = stats.total_courses || 0;
                     document.getElementById('total-students').textContent = stats.total_students || 0;
                     document.getElementById('total-quizzes').textContent = stats.total_quizzes || 0;
-                    document.getElementById('pending-assignments').textContent = stats.pending_assignments || 0;
+
+                    // Charger aussi le nombre de devoirs
+                    const assignResult = await apiRequest('teachers/assignments.php');
+                    if (assignResult.status === 'success') {
+                        document.getElementById('total-assignments').textContent = assignResult.data.length;
+                    }
                 }
             } catch (e) {
                 console.error('Erreur dashboard:', e);
             }
         }
 
-
+        // ============ COURS ============
         async function loadTeacherCourses() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (!user.email) {
-                    console.error('Email utilisateur non trouvé');
-                    return;
-                }
-
                 const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
                 const container = document.getElementById('courses-list');
 
                 if (result.status === 'success') {
                     const courses = result.data.courses || [];
-
                     if (courses.length === 0) {
                         container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Vous n\'avez pas encore créé de cours.</p>';
                     } else {
                         container.innerHTML = courses.map(c => `
-                    <div class="course-item">
-                        <h3>${escapeHtml(c.title)}</h3>
-                        <p>${escapeHtml(c.description)}</p>
-                        <div class="course-meta">
-                            <span><i class="fas fa-users"></i> ${c.enrollment_count || 0} étudiants</span>
-                            <span><i class="fas fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
-                            <span><i class="fas fa-tag"></i> ${escapeHtml(c.category)}</span>
-                        </div>
-                    </div>
-                `).join('');
+                            <div class="course-item">
+                                <h3>${escapeHtml(c.title)}</h3>
+                                <p>${escapeHtml(c.description)}</p>
+                                <div class="course-meta">
+                                    <span><i class="fas fa-users"></i> ${c.enrollment_count || 0} étudiants</span>
+                                    <span><i class="fas fa-calendar"></i> ${new Date(c.created_at).toLocaleDateString('fr-FR')}</span>
+                                    <span><i class="fas fa-tag"></i> ${escapeHtml(c.category)}</span>
+                                </div>
+                            </div>
+                        `).join('');
                     }
-                } else {
-                    container.innerHTML = '<p style="color: red; text-align: center;">' + (result.message || 'Erreur de chargement') + '</p>';
                 }
             } catch (e) {
                 console.error('Erreur cours:', e);
-                document.getElementById('courses-list').innerHTML = '<p style="color: red; text-align: center;">Erreur de connexion</p>';
             }
         }
 
         async function loadCoursesForSelect() {
             try {
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
-                if (!user.email) {
-                    console.error('Email utilisateur non trouvé');
-                    return;
-                }
-
                 const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
                 if (result.status === 'success') {
                     const courses = result.data.courses || [];
                     const options = courses.map(c => `<option value="${c.id}">${escapeHtml(c.title)}</option>`).join('');
 
-                    ['quiz-course', 'assignment-course'].forEach(id => {
+                    ['quiz-course', 'assignment-course', 'build-quiz-select'].forEach(id => {
                         const select = document.getElementById(id);
                         if (select) select.innerHTML = '<option value="">Choisir un cours</option>' + options;
                     });
@@ -586,50 +791,46 @@
             }
         }
 
-        // Gestion des fichiers
+        // ============ FILE UPLOAD ============
         function initFileUpload() {
             const area = document.getElementById('file-upload-area');
             const input = document.getElementById('course-files');
 
             area.addEventListener('click', () => input.click());
-
             input.addEventListener('change', (e) => handleFiles(e.target.files));
-
-            area.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                area.classList.add('dragover');
-            });
-
+            area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
             area.addEventListener('dragleave', () => area.classList.remove('dragover'));
-
             area.addEventListener('drop', (e) => {
                 e.preventDefault();
                 area.classList.remove('dragover');
                 handleFiles(e.dataTransfer.files);
             });
+
+            // File upload pour devoirs
+            const assignArea = document.getElementById('assignment-file-area');
+            const assignInput = document.getElementById('assignment-file');
+            if (assignArea && assignInput) {
+                assignArea.addEventListener('click', () => assignInput.click());
+                assignInput.addEventListener('change', (e) => handleAssignmentFile(e.target.files[0]));
+            }
         }
 
         function handleFiles(files) {
             const list = document.getElementById('file-list');
-
             Array.from(files).forEach(file => {
                 if (file.size > 10 * 1024 * 1024) {
                     alert('Fichier trop grand: ' + file.name);
                     return;
                 }
-
                 selectedFiles.push(file);
-
                 const item = document.createElement('div');
                 item.className = 'file-item';
                 item.innerHTML = `
-                <i class="fas fa-file"></i>
-                <span class="file-name">${escapeHtml(file.name)}</span>
-                <span class="file-size">${formatSize(file.size)}</span>
-                <span class="remove-file" onclick="removeFile('${file.name}')">
-                    <i class="fas fa-times"></i>
-                </span>
-            `;
+                    <i class="fas fa-file"></i>
+                    <span class="file-name">${escapeHtml(file.name)}</span>
+                    <span class="file-size">${formatSize(file.size)}</span>
+                    <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
+                `;
                 list.appendChild(item);
             });
         }
@@ -642,15 +843,32 @@
                 const item = document.createElement('div');
                 item.className = 'file-item';
                 item.innerHTML = `
-                <i class="fas fa-file"></i>
-                <span class="file-name">${escapeHtml(file.name)}</span>
-                <span class="file-size">${formatSize(file.size)}</span>
-                <span class="remove-file" onclick="removeFile('${file.name}')">
-                    <i class="fas fa-times"></i>
-                </span>
-            `;
+                    <i class="fas fa-file"></i>
+                    <span class="file-name">${escapeHtml(file.name)}</span>
+                    <span class="file-size">${formatSize(file.size)}</span>
+                    <span class="remove-file" onclick="removeFile('${file.name}')"><i class="fas fa-times"></i></span>
+                `;
                 list.appendChild(item);
             });
+        }
+
+        function handleAssignmentFile(file) {
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) {
+                alert('Fichier trop grand (max 10MB)');
+                return;
+            }
+            const preview = document.getElementById('assignment-file-preview');
+            preview.innerHTML = `
+                <div class="file-item">
+                    <i class="fas fa-file"></i>
+                    <span class="file-name">${escapeHtml(file.name)}</span>
+                    <span class="file-size">${formatSize(file.size)}</span>
+                    <span class="remove-file" onclick="document.getElementById('assignment-file').value=''; document.getElementById('assignment-file-preview').innerHTML=''">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </div>
+            `;
         }
 
         function formatSize(bytes) {
@@ -661,48 +879,32 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        // CRÉATION DU COURS - CORRECTION PRINCIPALE
+        // ============ CRÉATION COURS ============
         document.getElementById('create-course-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const token = localStorage.getItem('token');
-
-            if (!user.email || !token) {
-                alert('Veuillez vous reconnecter');
-                window.location.href = 'login.html';
-                return;
-            }
-
             const btn = document.getElementById('submit-course');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
 
             try {
-                // CORRECTION : Envoi avec email pour authentification
                 const courseData = {
                     teacher_email: user.email,
                     title: document.getElementById('course-title').value,
                     description: document.getElementById('course-description').value,
                     category: document.getElementById('course-category').value,
-                    is_public: document.getElementById('course-visibility').value === 'public'
+                    is_public: true
                 };
-
-                console.log('Envoi des données:', courseData);
 
                 const result = await apiRequest('teachers/create-course.php', {
                     method: 'POST',
                     body: courseData
                 });
 
-                console.log('Réponse:', result);
-
                 if (result.status === 'success') {
-                    // Upload des fichiers si présents
                     if (selectedFiles.length > 0) {
-                        await uploadFiles(result.data.course_id, token);
+                        await uploadFiles(result.data.course_id);
                     }
-
                     alert('Cours créé avec succès !');
                     document.getElementById('create-course-form').reset();
                     selectedFiles = [];
@@ -712,7 +914,7 @@
                     alert('Erreur: ' + (result.message || 'Erreur inconnue'));
                 }
             } catch (error) {
-                console.error('Erreur complète:', error);
+                console.error('Erreur:', error);
                 alert('Erreur serveur: ' + error.message);
             } finally {
                 btn.disabled = false;
@@ -720,7 +922,8 @@
             }
         });
 
-        async function uploadFiles(courseId, token) {
+        async function uploadFiles(courseId) {
+            const token = localStorage.getItem('token');
             for (const file of selectedFiles) {
                 const formData = new FormData();
                 formData.append('file', file);
@@ -739,6 +942,380 @@
             }
         }
 
+        // ============ QUIZ ============
+        document.getElementById('create-quiz-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                const result = await apiRequest('quizzes/create.php', {
+                    method: 'POST',
+                    body: {
+                        course_id: parseInt(document.getElementById('quiz-course').value),
+                        title: document.getElementById('quiz-title').value,
+                        description: document.getElementById('quiz-description').value,
+                        teacher_email: user.email
+                    }
+                });
+
+                if (result.status === 'success') {
+                    alert('Quiz créé avec succès !');
+                    document.getElementById('create-quiz-form').reset();
+                    loadCoursesForSelect();
+                    loadTeacherQuizzes();
+                } else {
+                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur serveur: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Créer le quiz';
+            }
+        });
+
+        async function loadTeacherQuizzes() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+
+                if (result.status === 'success') {
+                    // Récupérer les quiz via une requête séparée ou les extraire des données
+                    const container = document.getElementById('quizzes-list');
+
+                    // Pour l'instant, afficher un message indiquant de sélectionner un cours
+                    container.innerHTML = '<p style="color: #666; text-align: center;">Sélectionnez un quiz dans l\'onglet "Construire Questions" pour voir les détails</p>';
+                }
+            } catch (e) {
+                console.error('Erreur chargement quiz:', e);
+            }
+        }
+
+        // ============ CONSTRUCTEUR DE QUESTIONS ============
+        async function loadQuizzesForBuilder() {
+            try {
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const result = await apiRequest('teachers/index.php?email=' + encodeURIComponent(user.email));
+
+                if (result.status === 'success') {
+                    // On va chercher les quiz via l'API courses ou une autre méthode
+                    // Pour l'instant, on utilise les cours et on suppose qu'on récupère les quiz
+                    const select = document.getElementById('build-quiz-select');
+                    // Garder l'option par défaut
+                    const defaultOption = select.options[0];
+                    select.innerHTML = '';
+                    select.appendChild(defaultOption);
+
+                    // Récupérer les quiz de chaque cours
+                    for (const course of result.data.courses || []) {
+                        try {
+                            const quizResult = await apiRequest(`quizzes/questions.php?quiz_id=${course.id}`);
+                            // Si on a des quiz, les ajouter
+                        } catch (e) {
+                            // Ignorer les erreurs
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Erreur:', e);
+            }
+        }
+
+        function updateOptionInputType() {
+            const type = document.getElementById('question-type').value;
+            renderOptions();
+        }
+
+        function renderOptions() {
+            const container = document.getElementById('options-container');
+            const type = document.getElementById('question-type').value;
+            container.innerHTML = '';
+
+            if (type === 'true_false') {
+                currentOptions = [
+                    { id: 'tf1', text: 'Vrai', is_correct: true },
+                    { id: 'tf2', text: 'Faux', is_correct: false }
+                ];
+                currentOptions.forEach((opt, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'option-row';
+                    row.innerHTML = `
+                        <input type="${type === 'multiple_answer' ? 'checkbox' : 'radio'}" name="correct-option" 
+                            ${opt.is_correct ? 'checked' : ''} onchange="setCorrectOption('${opt.id}')" style="width: auto;">
+                        <input type="text" value="${opt.text}" readonly>
+                    `;
+                    container.appendChild(row);
+                });
+            } else {
+                currentOptions.forEach((opt, index) => {
+                    const row = document.createElement('div');
+                    row.className = 'option-row';
+                    row.innerHTML = `
+                        <input type="${type === 'multiple_answer' ? 'checkbox' : 'radio'}" name="correct-option" 
+                            ${opt.is_correct ? 'checked' : ''} onchange="toggleCorrectOption('${opt.id}')" style="width: auto;">
+                        <input type="text" value="${opt.text}" onchange="updateOptionText('${opt.id}', this.value)" placeholder="Option ${index + 1}">
+                        <button type="button" class="btn-remove" onclick="removeOption('${opt.id}')"><i class="fas fa-trash"></i></button>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+        }
+
+        function addOption() {
+            const type = document.getElementById('question-type').value;
+            if (type === 'true_false') return;
+
+            optionCounter++;
+            currentOptions.push({
+                id: 'opt_' + optionCounter,
+                text: '',
+                is_correct: false
+            });
+            renderOptions();
+        }
+
+        function removeOption(id) {
+            if (currentOptions.length <= 2) {
+                alert('Il faut au moins 2 options');
+                return;
+            }
+            currentOptions = currentOptions.filter(o => o.id !== id);
+            renderOptions();
+        }
+
+        function updateOptionText(id, text) {
+            const opt = currentOptions.find(o => o.id === id);
+            if (opt) opt.text = text;
+        }
+
+        function toggleCorrectOption(id) {
+            const type = document.getElementById('question-type').value;
+            const opt = currentOptions.find(o => o.id === id);
+
+            if (type === 'multiple_choice') {
+                // Une seule réponse correcte
+                currentOptions.forEach(o => o.is_correct = false);
+                if (opt) opt.is_correct = true;
+            } else {
+                // Plusieurs réponses possibles
+                if (opt) opt.is_correct = !opt.is_correct;
+            }
+            renderOptions();
+        }
+
+        function setCorrectOption(id) {
+            currentOptions.forEach(o => o.is_correct = (o.id === id));
+        }
+
+        function resetQuestionBuilder() {
+            document.getElementById('question-text').value = '';
+            document.getElementById('question-points').value = '1';
+            document.getElementById('question-explanation').value = '';
+            currentOptions = [
+                { id: 'opt_1', text: '', is_correct: false },
+                { id: 'opt_2', text: '', is_correct: false }
+            ];
+            optionCounter = 2;
+            renderOptions();
+        }
+
+        async function saveQuestion() {
+            const quizId = document.getElementById('build-quiz-select').value;
+            const questionText = document.getElementById('question-text').value;
+            const points = document.getElementById('question-points').value;
+            const explanation = document.getElementById('question-explanation').value;
+            const type = document.getElementById('question-type').value;
+
+            if (!quizId) {
+                alert('Veuillez sélectionner un quiz');
+                return;
+            }
+            if (!questionText.trim()) {
+                alert('Veuillez entrer une question');
+                return;
+            }
+            if (currentOptions.some(o => !o.text.trim())) {
+                alert('Veuillez remplir toutes les options');
+                return;
+            }
+            if (!currentOptions.some(o => o.is_correct)) {
+                alert('Veuillez sélectionner au moins une réponse correcte');
+                return;
+            }
+
+            try {
+                const result = await apiRequest('quizzes/questions.php', {
+                    method: 'POST',
+                    body: {
+                        quiz_id: parseInt(quizId),
+                        question: questionText,
+                        question_type: type === 'multiple_answer' ? 'multiple_choice' : type,
+                        points: parseInt(points),
+                        explanation: explanation,
+                        options: currentOptions.map(o => ({ text: o.text, is_correct: o.is_correct }))
+                    }
+                });
+
+                if (result.status === 'success') {
+                    alert('Question ajoutée avec succès !');
+                    resetQuestionBuilder();
+                    loadQuizQuestions();
+                } else {
+                    alert('Erreur: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de l\'ajout de la question');
+            }
+        }
+
+        async function loadQuizQuestions() {
+            const quizId = document.getElementById('build-quiz-select').value;
+            const container = document.getElementById('question-builder-container');
+            const listContainer = document.getElementById('saved-questions-list');
+
+            if (!quizId) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            try {
+                const result = await apiRequest(`quizzes/questions.php?quiz_id=${quizId}`);
+                if (result.status === 'success' && result.data.length > 0) {
+                    listContainer.innerHTML = result.data.map((q, index) => `
+                        <div class="saved-question">
+                            <h4>Question ${index + 1}: ${escapeHtml(q.question)} <span class="badge badge-info">${q.points} pts</span></h4>
+                            <ul class="saved-options">
+                                ${q.options.map(opt => `
+                                    <li class="${opt.is_correct ? 'correct-answer' : 'wrong-answer'}">
+                                        ${opt.is_correct ? '<i class="fas fa-check-circle"></i>' : '<i class="far fa-circle"></i>'} 
+                                        ${escapeHtml(opt.option_text)}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                            ${q.explanation ? `<p style="margin-top: 10px; color: #666; font-style: italic;"><i class="fas fa-info-circle"></i> ${escapeHtml(q.explanation)}</p>` : ''}
+                            <button class="btn-remove" onclick="deleteQuestion(${q.id})" style="margin-top: 10px;">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    listContainer.innerHTML = '<p style="color: #666; text-align: center;">Aucune question ajoutée</p>';
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                listContainer.innerHTML = '<p style="color: red; text-align: center;">Erreur de chargement</p>';
+            }
+        }
+
+        async function deleteQuestion(questionId) {
+            if (!confirm('Voulez-vous vraiment supprimer cette question ?')) return;
+
+            try {
+                const result = await apiRequest('quizzes/questions.php', {
+                    method: 'DELETE',
+                    body: { question_id: questionId }
+                });
+
+                if (result.status === 'success') {
+                    loadQuizQuestions();
+                } else {
+                    alert('Erreur: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la suppression');
+            }
+        }
+
+        // ============ DEVOIRS ============
+        document.getElementById('create-assignment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-assignment');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
+
+            try {
+                const formData = new FormData();
+                formData.append('course_id', document.getElementById('assignment-course').value);
+                formData.append('title', document.getElementById('assignment-title').value);
+                formData.append('description', document.getElementById('assignment-description').value);
+                formData.append('due_date', document.getElementById('assignment-due-date').value);
+                formData.append('max_points', document.getElementById('assignment-points').value);
+
+                if (document.getElementById('assignment-late').checked) {
+                    formData.append('allow_late_submission', '1');
+                }
+
+                const fileInput = document.getElementById('assignment-file');
+                if (fileInput.files.length > 0) {
+                    formData.append('file', fileInput.files[0]);
+                }
+
+                // Appel direct avec fetch pour FormData
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/assignments/create.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert('Devoir créé avec succès !');
+                    document.getElementById('create-assignment-form').reset();
+                    document.getElementById('assignment-file-preview').innerHTML = '';
+                    loadTeacherAssignments();
+                } else {
+                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur serveur: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Créer le devoir';
+            }
+        });
+        async function loadTeacherAssignments() {
+            try {
+                const result = await apiRequest('teachers/assignments.php');
+                const container = document.getElementById('assignments-list');
+
+                if (result.status === 'success') {
+                    const assignments = result.data || [];
+                    if (assignments.length === 0) {
+                        container.innerHTML = '<p style="color: #666; text-align: center;">Aucun devoir créé</p>';
+                    } else {
+                        container.innerHTML = assignments.map(a => `
+                            <div class="assignment-item">
+                                <h3>${escapeHtml(a.title)} <span class="badge ${a.submission_count > 0 ? 'badge-warning' : 'badge-success'}">${a.submission_count} soumission(s)</span></h3>
+                                <p>${escapeHtml(a.description)}</p>
+                                <div class="assignment-meta">
+                                    <span><i class="fas fa-book"></i> ${escapeHtml(a.course_title)}</span>
+                                    <span><i class="fas fa-calendar-alt"></i> À rendre: ${new Date(a.due_date).toLocaleString('fr-FR')}</span>
+                                    <span><i class="fas fa-star"></i> ${a.max_points} points</span>
+                                    ${a.file_name ? '<span><i class="fas fa-paperclip"></i> Fichier joint</span>' : ''}
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+            } catch (e) {
+                console.error('Erreur devoirs:', e);
+            }
+        }
+
+        // ============ UTILITAIRES ============
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -762,90 +1339,14 @@
             }
 
             initFileUpload();
+            resetQuestionBuilder();
             loadTeacherDashboard();
+
+            // Définir la date minimale pour le devoir (aujourd'hui)
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('assignment-due-date').min = now.toISOString().slice(0, 16);
         });
-        document.getElementById('create-quiz-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const courseId = document.getElementById('quiz-course').value;
-            const title = document.getElementById('quiz-title').value;
-
-            if (!courseId) {
-                alert('Veuillez sélectionner un cours');
-                return;
-            }
-
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
-
-            try {
-                const result = await apiRequest('quizzes/create.php', {
-                    method: 'POST',
-                    body: {
-                        course_id: parseInt(courseId),
-                        title: title,
-                        teacher_email: user.email
-                    }
-                });
-
-                if (result.status === 'success') {
-                    alert('Quiz créé avec succès !');
-                    e.target.reset();
-                    // Recharger la liste des quiz si vous avez une fonction pour ça
-                } else {
-                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
-                }
-            } catch (error) {
-                console.error('Erreur création quiz:', error);
-                alert('Erreur lors de la création du quiz');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Créer le quiz';
-            }
-        });
-        document.getElementById('create-assignment-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const courseId = document.getElementById('assignment-course').value;
-            const title = document.getElementById('assignment-title').value;
-
-            if (!courseId) {
-                alert('Veuillez sélectionner un cours');
-                return;
-            }
-
-            const btn = e.target.querySelector('button[type="submit"]');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Création...';
-
-            try {
-                const result = await apiRequest('assignments/create.php', {
-                    method: 'POST',
-                    body: {
-                        course_id: parseInt(courseId),
-                        title: title,
-                        teacher_email: user.email
-                    }
-                });
-
-                if (result.status === 'success') {
-                    alert('Devoir créé avec succès !');
-                    e.target.reset();
-                } else {
-                    alert('Erreur: ' + (result.message || 'Erreur inconnue'));
-                }
-            } catch (error) {
-                console.error('Erreur création devoir:', error);
-                alert('Erreur lors de la création du devoir');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Créer le devoir';
-            }
-        });
-
     </script>
 </body>
 
